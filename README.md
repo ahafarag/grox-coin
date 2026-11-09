@@ -21,6 +21,8 @@
 
 ---
 
+📖 **Full step-by-step guide:** [English](docs/GUIDE.md) · [العربية](docs/GUIDE.ar.md)
+
 ## Install (Ubuntu 22.04 / 24.04, or WSL on Windows)
 
 ```bash
@@ -111,6 +113,8 @@ BSD-3-Clause, see [LICENSE](LICENSE).
 | الخصوصية | تقنية Monero: محدش يقدر يشوف رصيد حد من عنوانه |
 
 > Grox عملة هواية للتعدين والتجربة. **ملهاش قيمة مالية ومش استثمار**، ومفيش بيع.
+
+📖 **الدليل الكامل خطوة بخطوة:** [بالعربي](docs/GUIDE.ar.md)
 
 ### التثبيت (Ubuntu أو WSL على ويندوز)
 
