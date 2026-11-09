@@ -46,7 +46,19 @@ def documents_dir():
 
 
 def default_wallet_dir():
-    return os.path.join(documents_dir(), "Grox") if IS_WIN else "~"
+    """Linux: the home folder. Windows: C:\\Users\\<you>\\Grox.
+
+    Not Documents: Windows Security's ransomware protection (Controlled folder
+    access) and redirected / OneDrive Documents folders can stop programs from
+    writing there, so wallets could not be created. Wallets that v1.1.0 already
+    put in Documents\\Grox keep being used from there."""
+    if not IS_WIN:
+        return "~"
+    home = os.path.join(os.path.expanduser("~"), "Grox")
+    old = os.path.join(documents_dir(), "Grox")
+    if not glob.glob(os.path.join(home, "*.keys")) and glob.glob(os.path.join(old, "*.keys")):
+        return old
+    return home
 
 
 def default_node_data_dir(testnet=False):
@@ -718,7 +730,7 @@ def build_parser():
     ap.add_argument("--port", type=int, default=8790)
     ap.add_argument("--bin-dir", default=os.path.join(HERE, "..", "..", "build", "bin"))
     ap.add_argument("--wallet-dir", default=default_wallet_dir(),
-                    help="folder with your wallet files (default: home folder; Documents\\Grox on Windows)")
+                    help="folder with your wallet files (default: home folder; C:\\Users\\<you>\\Grox on Windows)")
     ap.add_argument("--data-dir", default=None, help="groxd blockchain folder (default: groxd's own default)")
     ap.add_argument("--log-dir", default=None, help="folder for the wallet service log (default: wallet folder)")
     ap.add_argument("--node-args", default="",

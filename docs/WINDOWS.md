@@ -47,13 +47,15 @@ Grox asks first. To keep mining, keep the window open (you can minimize it).
 
 | What | Where |
 |---|---|
-| Wallet files (back these up) | `Documents\Grox` (shortcut: Start menu → **Grox wallet files**) |
+| Wallet files (back these up) | `C:\Users\<you>\Grox` (shortcut: Start menu → **Grox wallet files**) |
 | Blockchain | `C:\ProgramData\grox` |
 | Logs | `%LOCALAPPDATA%\Grox\logs` and `C:\ProgramData\grox\grox.log` |
 | The app | `%LOCALAPPDATA%\Programs\Grox Wallet` |
 
+Wallets made with v1.1.0 in `Documents\Grox` keep working from there.
+
 **Back up**: your 25 words on paper are the real backup. You can also copy the `*.keys` files
-from `Documents\Grox` to a USB stick. To restore on a new computer, choose **Restore** in the app
+from `C:\Users\<you>\Grox` to a USB stick. To restore on a new computer, choose **Restore** in the app
 and type the 25 words.
 
 ## Update and uninstall
@@ -61,7 +63,7 @@ and type the 25 words.
 - **Update**: close Grox Wallet, run the new `GroxWallet-Setup-…exe`. Your wallets and the
   blockchain stay.
 - **Uninstall**: Windows Settings → Apps → **Grox Wallet** → Uninstall. Your wallet files in
-  `Documents\Grox` and the blockchain in `C:\ProgramData\grox` are **kept**. Delete
+  `C:\Users\<you>\Grox` and the blockchain in `C:\ProgramData\grox` are **kept**. Delete
   `C:\ProgramData\grox` yourself to free the disk space.
 
 ## Troubleshooting
@@ -69,6 +71,7 @@ and type the 25 words.
 | Problem | Fix |
 |---|---|
 | "Windows protected your PC" | **More info** → **Run anyway**. |
+| v1.1.0 setup: "Unable to create the directory …\Documents\Grox" | Fixed in v1.1.1, which no longer uses Documents. Download the latest installer and run it again. |
 | Windows Firewall asks about `groxd.exe` | **Allow** lets other Grox nodes connect to you (helps the network). **Cancel** is fine too: mining still works. |
 | Antivirus deleted or blocked `groxd.exe` | Many antivirus programs flag *every* crypto miner. Grox mines only when you press Start. Restore the file from quarantine and allow it, or reinstall. |
 | The wallet opened in my browser, plus a small "Grox is running" window | Your Windows lacks Microsoft Edge WebView2. The wallet works the same in the browser. To get the normal window, install the [WebView2 Runtime](https://developer.microsoft.com/microsoft-edge/webview2/) from Microsoft. |
@@ -134,20 +137,21 @@ python windows\grox_wallet.py --bin-dir <folder with groxd.exe>
 
 | إيه | فين |
 |---|---|
-| ملفات المحفظة (خد منها نسخة) | `Documents\Grox` (من قايمة Start: **Grox wallet files**) |
+| ملفات المحفظة (خد منها نسخة) | `C:\Users\<you>\Grox` (من قايمة Start: **Grox wallet files**) |
 | البلوكتشين | `C:\ProgramData\grox` |
 | السجلات | `%LOCALAPPDATA%\Grox\logs` و `C:\ProgramData\grox\grox.log` |
 
-النسخة الاحتياطية الحقيقية هي **الـ25 كلمة على ورقة**. وممكن كمان تنسخ ملفات `*.keys` من `Documents\Grox` على فلاشة. عشان ترجّع المحفظة على جهاز جديد، اختار **استرجاع** واكتب الـ25 كلمة.
+النسخة الاحتياطية الحقيقية هي **الـ25 كلمة على ورقة**. وممكن كمان تنسخ ملفات `*.keys` من `C:\Users\<you>\Grox` على فلاشة. عشان ترجّع المحفظة على جهاز جديد، اختار **استرجاع** واكتب الـ25 كلمة.
 
 ### التحديث والحذف
 
 - **التحديث**: اقفل Grox Wallet وشغّل ملف التثبيت الجديد. المحافظ والبلوكتشين بيفضلوا زي ما هم.
-- **الحذف**: الإعدادات ← Apps ← **Grox Wallet** ← Uninstall. ملفات المحفظة في `Documents\Grox` والبلوكتشين في `C:\ProgramData\grox` **مش بيتمسحوا**. امسح `C:\ProgramData\grox` بنفسك لو عايز المساحة.
+- **الحذف**: الإعدادات ← Apps ← **Grox Wallet** ← Uninstall. ملفات المحفظة في `C:\Users\<you>\Grox` والبلوكتشين في `C:\ProgramData\grox` **مش بيتمسحوا**. امسح `C:\ProgramData\grox` بنفسك لو عايز المساحة.
 
 ### حل المشاكل
 
 - **Windows protected your PC**: دوس **More info** ثم **Run anyway**.
+- **نسخة 1.1.0 قالت "Unable to create the directory …\Documents\Grox"**: اتصلّحت في 1.1.1 ومبقتش بتستخدم Documents. نزّل آخر نسخة وشغّلها تاني.
 - **الجدار الناري بيسأل عن `groxd.exe`**: **Allow** بيخلي أجهزة Grox التانية تتصل بيك (بيساعد الشبكة)، و**Cancel** برضه ماشي والتعدين هيشتغل.
 - **برنامج الحماية مسح `groxd.exe`**: برامج كتير بتعترض على أي برنامج تعدين. Grox مبيعدّنش غير لما تدوس ابدأ. رجّع الملف من الحجر واسمح بيه، أو ثبّت تاني.
 - **المحفظة فتحت في المتصفح ومعاها شاشة صغيرة "Grox is running"**: جهازك ناقصه Microsoft Edge WebView2. المحفظة شغالة عادي في المتصفح، ولو عايز الشاشة العادية ثبّت [WebView2 Runtime](https://developer.microsoft.com/microsoft-edge/webview2/).

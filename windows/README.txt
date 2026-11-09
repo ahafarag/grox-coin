@@ -10,7 +10,7 @@ Start "Grox Wallet" from the Start menu (or double-click GroxWallet.exe).
 Closing the window saves your wallet and stops mining and the Grox node.
 
 Where things are
-  Wallet files ........ Documents\Grox            (back up the *.keys files + your 25 words)
+  Wallet files ........ C:\Users\<you>\Grox      (back up the *.keys files + your 25 words)
   Blockchain .......... C:\ProgramData\grox
   Logs ................ %LOCALAPPDATA%\Grox\logs  and  C:\ProgramData\grox\grox.log
 

@@ -201,6 +201,17 @@ def self_check(path):
     bin_dir = default_bin_dir()
     out["bins"] = {n: os.path.exists(os.path.join(bin_dir, n + grox_app.EXE))
                    for n in ("groxd", "grox-wallet-rpc", "grox-wallet-cli")}
+    wallet_dir = os.path.abspath(os.path.expanduser(grox_app.default_wallet_dir()))
+    out["wallet_dir"] = wallet_dir
+    try:  # can the app create its wallet folder and write a file there?
+        os.makedirs(wallet_dir, exist_ok=True)
+        probe = os.path.join(wallet_dir, ".grox-write-test")
+        with open(probe, "w") as f:
+            f.write("ok")
+        os.remove(probe)
+        out["wallet_dir_writable"] = True
+    except Exception as e:
+        out["wallet_dir_writable"] = repr(e)
     try:
         import webview  # noqa: F401
         out["webview"] = True
@@ -235,7 +246,13 @@ def main():
         return self_check(args.self_check)
 
     url = f"http://127.0.0.1:{args.port}/"
-    grox_app.configure(args)
+    try:
+        grox_app.configure(args)
+    except OSError as e:
+        message_box(f"Grox Wallet can't use the folder {e.filename or args.wallet_dir}:\n{e.strerror or e}\n\n"
+                    "If Windows Security blocked it (ransomware protection), allow GroxWallet.exe there, "
+                    "or start Grox Wallet with --wallet-dir <another folder>.")
+        sys.exit(1)
     try:
         srv = grox_app.make_server(args.port)
     except OSError:
