@@ -4,6 +4,10 @@
 
 Everything you need to mine Grox, from zero. No technical background needed.
 
+> **On Windows?** The easiest way is the **Grox Wallet app**: one installer, no Ubuntu/WSL.
+> See [WINDOWS.md](WINDOWS.md). This guide covers Ubuntu, WSL and servers; sections 5–7
+> (mining, sending, backups) work the same in the Windows app.
+
 1. [What you need](#1-what-you-need)
 2. [Windows: install Ubuntu (WSL)](#2-windows-install-ubuntu-wsl)
 3. [Install Grox](#3-install-grox)
@@ -28,7 +32,8 @@ Everything you need to mine Grox, from zero. No technical background needed.
 
 ## 2. Windows: install Ubuntu (WSL)
 
-Skip this if you already use Ubuntu.
+Skip this if you already use Ubuntu, or if you use the [Windows app](WINDOWS.md) instead
+(recommended on Windows).
 
 1. Click **Start**, type `PowerShell`, right-click it and choose **Run as administrator**.
 2. Run:
