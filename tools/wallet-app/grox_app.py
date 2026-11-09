@@ -3,6 +3,8 @@
 
 Runs a tiny web server on 127.0.0.1 (default port 8790). Open
 http://localhost:8790 in your browser (on Windows too, when this runs in WSL).
+On Windows it also runs natively: windows/grox_wallet.py wraps it in a desktop
+window (GroxWallet.exe).
 
 Only the Python standard library is used.
 """
@@ -13,6 +15,7 @@ import json
 import os
 import secrets
 import shlex
+import socket
 import subprocess
 import sys
 import threading
@@ -22,27 +25,167 @@ import urllib.request
 from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
 
 ATOMIC = 10 ** 11  # 1 GROX = 10^11 groxatoms
-HERE = os.path.dirname(os.path.abspath(__file__))
+# PyInstaller (GroxWallet.exe) unpacks bundled files (index.html) into sys._MEIPASS
+HERE = getattr(sys, "_MEIPASS", None) or os.path.dirname(os.path.abspath(__file__))
+IS_WIN = os.name == "nt"
+EXE = ".exe" if IS_WIN else ""
+CREATE_NO_WINDOW = 0x08000000  # Windows: don't flash a console window for groxd / grox-wallet-rpc
+
+
+def documents_dir():
+    """The user's real Documents folder (follows OneDrive / moved folders on Windows)."""
+    if IS_WIN:
+        try:
+            import ctypes
+            buf = ctypes.create_unicode_buffer(1024)
+            if ctypes.windll.shell32.SHGetFolderPathW(None, 5, None, 0, buf) == 0 and buf.value:  # CSIDL_PERSONAL
+                return buf.value
+        except Exception:
+            pass
+    return os.path.join(os.path.expanduser("~"), "Documents")
+
+
+def default_wallet_dir():
+    return os.path.join(documents_dir(), "Grox") if IS_WIN else "~"
+
+
+def default_node_data_dir(testnet=False):
+    """Where groxd keeps the blockchain when no --data-dir is given (see get_default_data_dir)."""
+    if IS_WIN:
+        base = os.path.join(os.environ.get("PROGRAMDATA", r"C:\ProgramData"), "grox")
+    else:
+        base = os.path.join(os.path.expanduser("~"), ".grox")
+    return os.path.join(base, "testnet") if testnet else base
+
+
+def arg_path(path):
+    """A path that is safe to pass on the command line of groxd / grox-wallet-rpc.
+
+    On Windows the Monero code reads its arguments in the ANSI code page, so a
+    folder like C:\\Users\\<Arabic name>\\Documents would arrive garbled. For such
+    paths use the short 8.3 name (plain ASCII), which Windows keeps for them."""
+    if not IS_WIN or path.isascii():
+        return path
+    try:
+        import ctypes
+        target = path if os.path.isdir(path) else os.path.dirname(path)
+        os.makedirs(target, exist_ok=True)
+        buf = ctypes.create_unicode_buffer(1024)
+        if ctypes.windll.kernel32.GetShortPathNameW(target, buf, 1024) and buf.value.isascii():
+            return buf.value if target == path else os.path.join(buf.value, os.path.basename(path))
+    except Exception:
+        pass
+    return path
+
+
+def port_free(port):
+    s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+    try:
+        s.bind(("127.0.0.1", port))
+        return True
+    except OSError:
+        return False
+    finally:
+        s.close()
+
+
+def free_port():
+    s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+    try:
+        s.bind(("127.0.0.1", 0))
+        return s.getsockname()[1]
+    finally:
+        s.close()
 
 
 class Config:
     def __init__(self, args):
         self.testnet = args.testnet
-        self.bin_dir = os.path.abspath(args.bin_dir)
+        self.regtest = getattr(args, "regtest", False)
+        self.bin_dir = os.path.abspath(os.path.expanduser(args.bin_dir))
         self.wallet_dir = os.path.abspath(os.path.expanduser(args.wallet_dir))
+        os.makedirs(self.wallet_dir, exist_ok=True)
+        self.log_dir = os.path.abspath(os.path.expanduser(getattr(args, "log_dir", None) or self.wallet_dir))
+        os.makedirs(self.log_dir, exist_ok=True)
         self.daemon_port = 29881 if args.testnet else 19881
         self.wallet_rpc_port = 29885 if args.testnet else 19885
-        self.node_args = shlex.split(args.node_args)
+        node_args = args.node_args
+        self.node_args = list(node_args) if isinstance(node_args, (list, tuple)) else shlex.split(node_args, posix=not IS_WIN)
+        data_dir = getattr(args, "data_dir", None)
+        if data_dir:
+            data_dir = os.path.abspath(os.path.expanduser(data_dir))
+            os.makedirs(data_dir, exist_ok=True)
+            self.node_args += ["--data-dir", arg_path(data_dir)]
+            self.node_log = os.path.join(data_dir, "testnet", "grox.log") if args.testnet else os.path.join(data_dir, "grox.log")
+        else:
+            self.node_log = os.path.join(default_node_data_dir(args.testnet), "grox.log")
+        if self.regtest:
+            # private one-computer chain for tests: no peers, every hash finds a block
+            self.node_args += ["--regtest", "--offline", "--fixed-difficulty", "1", "--no-igd"]
+        # groxd started by this app (Windows desktop app) is stopped again when the app closes
+        self.manage_node = getattr(args, "manage_node", False)
         self.daemon = f"http://127.0.0.1:{self.daemon_port}"
-        self.wallet_rpc = f"http://127.0.0.1:{self.wallet_rpc_port}"
         # random credentials so no other local program can use the wallet RPC
         self.rpc_user = "grox"
         self.rpc_pass = secrets.token_hex(16)
 
+    @property
+    def wallet_rpc(self):
+        return f"http://127.0.0.1:{self.wallet_rpc_port}"
+
 
 CFG = None
 LOCK = threading.Lock()
-STATE = {"wallet_proc": None, "wallet_file": None}
+NODE_LOCK = threading.Lock()
+STATE = {"wallet_proc": None, "wallet_file": None, "node_proc": None}
+QUIT = threading.Event()  # set by POST /api/quit (used by the desktop app / tests)
+_JOB = []
+
+
+def _kill_with_us(proc):
+    """Windows: put a child in a job object that is closed when this app exits,
+    so groxd / grox-wallet-rpc never keep running (and mining) invisibly after a crash."""
+    if not IS_WIN:
+        return
+    try:
+        import ctypes
+        from ctypes import wintypes
+        k32 = ctypes.WinDLL("kernel32", use_last_error=True)
+        k32.CreateJobObjectW.restype = wintypes.HANDLE
+        k32.CreateJobObjectW.argtypes = [wintypes.LPVOID, wintypes.LPCWSTR]
+        k32.SetInformationJobObject.argtypes = [wintypes.HANDLE, ctypes.c_int, wintypes.LPVOID, wintypes.DWORD]
+        k32.AssignProcessToJobObject.argtypes = [wintypes.HANDLE, wintypes.HANDLE]
+        if not _JOB:
+            class IoCounters(ctypes.Structure):
+                _fields_ = [(n, ctypes.c_ulonglong) for n in ("ro", "wo", "oo", "rb", "wb", "ob")]
+
+            class Basic(ctypes.Structure):
+                _fields_ = [("PerProcessUserTimeLimit", ctypes.c_int64), ("PerJobUserTimeLimit", ctypes.c_int64),
+                            ("LimitFlags", wintypes.DWORD), ("MinimumWorkingSetSize", ctypes.c_size_t),
+                            ("MaximumWorkingSetSize", ctypes.c_size_t), ("ActiveProcessLimit", wintypes.DWORD),
+                            ("Affinity", ctypes.c_size_t), ("PriorityClass", wintypes.DWORD),
+                            ("SchedulingClass", wintypes.DWORD)]
+
+            class Extended(ctypes.Structure):
+                _fields_ = [("BasicLimitInformation", Basic), ("IoInfo", IoCounters),
+                            ("ProcessMemoryLimit", ctypes.c_size_t), ("JobMemoryLimit", ctypes.c_size_t),
+                            ("PeakProcessMemoryUsed", ctypes.c_size_t), ("PeakJobMemoryUsed", ctypes.c_size_t)]
+
+            job = k32.CreateJobObjectW(None, None)
+            info = Extended()
+            info.BasicLimitInformation.LimitFlags = 0x2000  # JOB_OBJECT_LIMIT_KILL_ON_JOB_CLOSE
+            k32.SetInformationJobObject(job, 9, ctypes.byref(info), ctypes.sizeof(info))  # ExtendedLimitInformation
+            _JOB.append(job)
+        k32.AssignProcessToJobObject(_JOB[0], proc._handle)
+    except Exception:
+        pass
+
+
+def _spawn(cmd):
+    kw = {"creationflags": CREATE_NO_WINDOW} if IS_WIN else {}
+    p = subprocess.Popen(cmd, stdin=subprocess.DEVNULL, stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL, **kw)
+    _kill_with_us(p)
+    return p
 
 
 class RpcError(Exception):
@@ -133,21 +276,30 @@ def wallet_rpc_up():
 def start_wallet_rpc():
     if STATE["wallet_proc"] and STATE["wallet_proc"].poll() is None and wallet_rpc_up():
         return
-    exe = os.path.join(CFG.bin_dir, "grox-wallet-rpc")
-    cmd = [exe, "--wallet-dir", CFG.wallet_dir, "--rpc-bind-ip", "127.0.0.1",
+    # an old copy (e.g. left over from a crash) may hold the usual port; use another one
+    if not port_free(CFG.wallet_rpc_port):
+        CFG.wallet_rpc_port = free_port()
+    exe = os.path.join(CFG.bin_dir, "grox-wallet-rpc" + EXE)
+    log = os.path.join(CFG.log_dir, "grox-wallet-app-rpc.log")
+    cmd = [exe, "--wallet-dir", arg_path(CFG.wallet_dir), "--rpc-bind-ip", "127.0.0.1",
            "--rpc-bind-port", str(CFG.wallet_rpc_port),
            "--rpc-login", f"{CFG.rpc_user}:{CFG.rpc_pass}",
            "--daemon-address", f"127.0.0.1:{CFG.daemon_port}", "--trusted-daemon",
-           "--log-file", os.path.join(CFG.wallet_dir, "grox-wallet-app-rpc.log")]
+           "--log-file", arg_path(log)]
     if CFG.testnet:
         cmd.append("--testnet")
-    STATE["wallet_proc"] = subprocess.Popen(cmd, stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
-    for _ in range(60):
+    if CFG.regtest:  # regtest turns on every fork at height 1, mainnet wallets expect v16 from height 2
+        cmd.append("--allow-mismatched-daemon-version")
+    if not os.path.exists(exe):
+        raise RpcError(f"grox-wallet-rpc{EXE} is missing from {CFG.bin_dir}. Reinstall Grox.")
+    STATE["wallet_proc"] = _spawn(cmd)
+    for _ in range(120):
         if wallet_rpc_up():
             return
         if STATE["wallet_proc"].poll() is not None:
+            hint = ("end grox-wallet-rpc.exe in Task Manager" if IS_WIN else "run: pkill grox-wallet-rpc")
             raise RpcError(f"grox-wallet-rpc could not start. If an old copy is still running, "
-                           f"run: pkill grox-wallet-rpc  (details in grox-wallet-app-rpc.log)")
+                           f"{hint}  (details in {log})")
         time.sleep(0.5)
     raise RpcError("grox-wallet-rpc did not start")
 
@@ -394,24 +546,72 @@ def api_send(body):
     return {"txid": r.get("tx_hash"), "fee": r.get("fee", 0) / ATOMIC, "amount": r.get("amount", 0) / ATOMIC}
 
 
+def node_failed():
+    return RpcError("الشبكة (groxd) مشتغلتش. التفاصيل في: " + CFG.node_log)
+
+
 def api_node_start(_body):
-    if daemon_up():
-        return {"ok": True, "already": True}
-    exe = os.path.join(CFG.bin_dir, "groxd")
-    cmd = [exe, "--detach", "--non-interactive"] + CFG.node_args
-    if CFG.testnet:
-        cmd.append("--testnet")
-    subprocess.Popen(cmd, stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL).wait(timeout=60)
-    for _ in range(60):
+    with NODE_LOCK:
         if daemon_up():
-            return {"ok": True}
-        time.sleep(1)
-    raise RpcError("الشبكة (groxd) مشتغلتش، شوف ~/.grox/grox.log")
+            return {"ok": True, "already": True}
+        exe = os.path.join(CFG.bin_dir, "groxd" + EXE)
+        if not os.path.exists(exe):
+            raise RpcError(f"groxd{EXE} is missing from {CFG.bin_dir}. Reinstall Grox.")
+        args = ["--non-interactive"] + CFG.node_args
+        if CFG.testnet:
+            args.append("--testnet")
+        if CFG.manage_node or IS_WIN:
+            # runs as our child (Windows has no --detach): hidden, stopped when the app closes
+            proc = STATE["node_proc"] = _spawn([exe] + args)
+        else:
+            proc = None
+            subprocess.Popen([exe, "--detach"] + args, stdout=subprocess.DEVNULL,
+                             stderr=subprocess.DEVNULL).wait(timeout=60)
+        for _ in range(180):
+            if daemon_up():
+                return {"ok": True}
+            if proc is not None and proc.poll() is not None:
+                break
+            time.sleep(1)
+        raise node_failed()
 
 
 def api_node_stop(_body):
     daemon_other("stop_daemon")
     return {"ok": True}
+
+
+def api_quit(_body):
+    QUIT.set()
+    return {"ok": True}
+
+
+def mining_active():
+    try:  # short timeout: the desktop app asks this while its window is closing
+        return bool(_post(CFG.daemon + "/mining_status", {}, timeout=3).get("active"))
+    except Exception:
+        return False
+
+
+def shutdown():
+    """Close the wallet (it is saved) and, if this app started groxd, stop the node too."""
+    stop_wallet_rpc()
+    p = STATE["node_proc"]
+    if p is None or p.poll() is not None:
+        return
+    try:
+        daemon_other("stop_mining")
+    except Exception:
+        pass
+    try:
+        daemon_other("stop_daemon")
+    except Exception:
+        pass
+    try:
+        p.wait(timeout=90)  # groxd saves the blockchain before it exits
+    except subprocess.TimeoutExpired:
+        p.terminate()
+    STATE["node_proc"] = None
 
 
 ROUTES = {
@@ -425,6 +625,7 @@ ROUTES = {
     ("POST", "/api/send"): api_send,
     ("POST", "/api/node/start"): api_node_start,
     ("POST", "/api/node/stop"): api_node_stop,
+    ("POST", "/api/quit"): api_quit,
 }
 
 
@@ -443,7 +644,7 @@ EN_ERRORS = {
     "عنوان Grox غير صحيح": "Invalid Grox address",
     "الشبكة لسه صغيرة على إخفاء التحويل وسط عملات أقدم. كمّل تعدين شوية وجرّب تاني.": "The chain is still too young to hide your payment among older coins. Keep mining a while and try again.",
     "الرصيد المتاح مش كفاية (العملات المعدّنة بتتفتح بعد 60 بلوك)": "Not enough unlocked GROX (mined coins unlock after 60 blocks)",
-    "الشبكة (groxd) مشتغلتش، شوف ~/.grox/grox.log": "groxd did not start, check ~/.grox/grox.log",
+    "الشبكة (groxd) مشتغلتش. التفاصيل في: ": "The Grox node (groxd) did not start. Details in: ",
     "مش قادر أوصل للشبكة أو المحفظة": "Node or wallet service is not reachable",
     "اسم المحفظة: حروف إنجليزي وأرقام و - و _ بس": "Wallet name: English letters, digits, - and _ only",
     "فيه محفظة بنفس الاسم، اختار اسم تاني": "A wallet with this name already exists, pick another name",
@@ -453,16 +654,22 @@ EN_ERRORS = {
 }
 
 
+def translate_error(msg):
+    if msg in EN_ERRORS:
+        return EN_ERRORS[msg]
+    for ar, en in EN_ERRORS.items():  # messages that end with a detail, e.g. a file path
+        if ar.endswith(": ") and msg.startswith(ar):
+            return en + msg[len(ar):]
+    return msg
+
+
 class Handler(BaseHTTPRequestHandler):
     def log_message(self, *a):
         pass
 
     def _send(self, code, body, ctype="application/json"):
         if isinstance(body, dict) and "error" in body and self.headers.get("X-Lang") == "en":
-            msg = body["error"]
-            if msg.startswith("grox-wallet-rpc could not start"):
-                pass
-            body = {"error": EN_ERRORS.get(msg, msg)}
+            body = {"error": translate_error(body["error"])}
         data = body if isinstance(body, bytes) else json.dumps(body).encode()
         self.send_response(code)
         self.send_header("Content-Type", ctype)
@@ -506,37 +713,60 @@ class Handler(BaseHTTPRequestHandler):
         self._handle("POST")
 
 
-def main():
-    global CFG
+def build_parser():
     ap = argparse.ArgumentParser(description="Grox Wallet app")
     ap.add_argument("--port", type=int, default=8790)
     ap.add_argument("--bin-dir", default=os.path.join(HERE, "..", "..", "build", "bin"))
-    ap.add_argument("--wallet-dir", default="~")
+    ap.add_argument("--wallet-dir", default=default_wallet_dir(),
+                    help="folder with your wallet files (default: home folder; Documents\\Grox on Windows)")
+    ap.add_argument("--data-dir", default=None, help="groxd blockchain folder (default: groxd's own default)")
+    ap.add_argument("--log-dir", default=None, help="folder for the wallet service log (default: wallet folder)")
     ap.add_argument("--node-args", default="",
                     help='extra groxd args for the "Start node" button, e.g. "--add-priority-node=1.2.3.4:19880"')
     ap.add_argument("--testnet", action="store_true")
-    CFG = Config(ap.parse_args())
+    ap.add_argument("--regtest", action="store_true", help=argparse.SUPPRESS)
+    return ap
+
+
+def configure(args):
+    global CFG
+    CFG = Config(args)
+    return CFG
+
+
+def make_server(port):
+    """Bind the local web server, or raise OSError when the port is busy."""
+    return ThreadingHTTPServer(("127.0.0.1", port), Handler)
+
+
+def main():
+    args = build_parser().parse_args()
+    configure(args)
     import signal
 
     def _quit(*_):
         raise KeyboardInterrupt
     signal.signal(signal.SIGTERM, _quit)
-    signal.signal(signal.SIGHUP, _quit)
+    if hasattr(signal, "SIGHUP"):
+        signal.signal(signal.SIGHUP, _quit)
     try:
-        srv = ThreadingHTTPServer(("127.0.0.1", ap.parse_args().port), Handler)
+        srv = make_server(args.port)
     except OSError:
-        print(f"Grox Wallet is already running (port {ap.parse_args().port} is busy).")
-        print(f"Open http://localhost:{ap.parse_args().port} - or stop the old copy with: pkill -INT -f grox_app.py")
+        print(f"Grox Wallet is already running (port {args.port} is busy).")
+        print(f"Open http://localhost:{args.port} - or stop the old copy with: pkill -INT -f grox_app.py")
         sys.exit(1)
     print(f"Grox Wallet is running: open http://localhost:{srv.server_port} in your browser")
     print("Press Ctrl+C to quit (your wallet is saved and closed).")
+    threading.Thread(target=srv.serve_forever, daemon=True).start()
     try:
-        srv.serve_forever()
+        while not QUIT.wait(0.5):
+            pass
     except KeyboardInterrupt:
         pass
     finally:
         print("\nClosing wallet...")
-        stop_wallet_rpc()
+        srv.shutdown()
+        shutdown()
 
 
 if __name__ == "__main__":

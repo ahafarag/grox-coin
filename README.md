@@ -23,6 +23,13 @@
 
 📖 **Full step-by-step guide:** [English](docs/GUIDE.md) · [العربية](docs/GUIDE.ar.md)
 
+## Windows: Grox Wallet app (easiest)
+
+Download **`GroxWallet-Setup-<version>-win-x64.exe`** from the
+[latest release](https://github.com/ahafarag/grox-coin/releases/latest), run it, open **Grox Wallet**.
+Create a wallet, press **Start mining**. Wallet, node and solo mining in one window, no WSL needed.
+Details: [docs/WINDOWS.md](docs/WINDOWS.md).
+
 ## Install (Ubuntu 22.04 / 24.04, or WSL on Windows)
 
 ```bash
@@ -33,8 +40,8 @@ The installer downloads the latest release, **checks its SHA256 checksum**, inst
 libraries Grox needs and puts everything in `~/grox`. The release files are built by
 GitHub Actions from this repository's code, in public. See the *Actions* tab.
 
-On **Windows**: install *Ubuntu* from the Microsoft Store (that's WSL), open it and run the
-command above. The wallet opens in your normal Windows browser.
+On **Windows** you can also use this route: install *Ubuntu* from the Microsoft Store (that's WSL),
+open it and run the command above. The wallet opens in your normal Windows browser.
 
 ## Use
 
@@ -116,6 +123,12 @@ BSD-3-Clause, see [LICENSE](LICENSE).
 
 📖 **الدليل الكامل خطوة بخطوة:** [بالعربي](docs/GUIDE.ar.md)
 
+### ويندوز: برنامج Grox Wallet (الأسهل)
+
+نزّل **`GroxWallet-Setup-<version>-win-x64.exe`** من [آخر إصدار](https://github.com/ahafarag/grox-coin/releases/latest)،
+شغّله، وافتح **Grox Wallet**. اعمل محفظة ودوس **ابدأ التعدين**. المحفظة والشبكة والتعدين في شاشة واحدة، من غير WSL.
+التفاصيل: [docs/WINDOWS.md](docs/WINDOWS.md#العربية).
+
 ### التثبيت (Ubuntu أو WSL على ويندوز)
 
 </div>
@@ -129,7 +142,7 @@ curl -fsSL https://raw.githubusercontent.com/ahafarag/grox-coin/main/install.sh 
 البرنامج بينزّل آخر نسخة، **ويتأكد إنها سليمة** (SHA256)، وبيحطها في `~/grox`.
 النسخ دي بتتبني على GitHub بشكل علني من الكود ده نفسه.
 
-على **ويندوز**: نزّل *Ubuntu* من Microsoft Store، افتحه، واكتب الأمر اللي فوق.
+على **ويندوز** ممكن كمان: نزّل *Ubuntu* من Microsoft Store، افتحه، واكتب الأمر اللي فوق.
 
 ### التشغيل
 

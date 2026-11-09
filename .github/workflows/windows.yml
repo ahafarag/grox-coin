@@ -1,0 +1,144 @@
+name: windows
+
+# Builds the Windows wallet in public, from this repository's code:
+#   1. groxd.exe / grox-wallet-rpc.exe / grox-wallet-cli.exe, cross-compiled on Ubuntu
+#      with the pinned libraries in contrib/depends (same route as Monero's releases)
+#   2. GroxWallet.exe (desktop app, PyInstaller) + installer (Inno Setup) + portable zip,
+#      then tested on Windows: a private regtest chain is solo-mined through the app,
+#      and the installer is installed + uninstalled silently.
+# release.yml calls this workflow to attach the Windows files to each release.
+on:
+  push:
+    paths:
+      - "windows/**"
+      - "tools/wallet-app/**"
+      - ".github/workflows/windows.yml"
+  pull_request:
+    paths:
+      - "windows/**"
+      - "tools/wallet-app/**"
+      - ".github/workflows/windows.yml"
+  workflow_dispatch:
+  workflow_call:
+
+permissions:
+  contents: read
+
+jobs:
+  binaries:
+    runs-on: ubuntu-22.04
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Install cross compiler
+        run: |
+          sudo apt-get update
+          sudo DEBIAN_FRONTEND=noninteractive apt-get install -y build-essential libtool cmake \
+            autotools-dev automake pkg-config bsdmainutils curl git ca-certificates python3 gperf \
+            g++-mingw-w64-x86-64
+          # std::thread needs the posix flavour of mingw
+          sudo update-alternatives --set x86_64-w64-mingw32-g++ "$(command -v x86_64-w64-mingw32-g++-posix)"
+          sudo update-alternatives --set x86_64-w64-mingw32-gcc "$(command -v x86_64-w64-mingw32-gcc-posix)"
+
+      - name: Cache libraries
+        uses: actions/cache@v4
+        with:
+          path: |
+            contrib/depends/built
+            contrib/depends/sources
+          key: depends-x86_64-w64-mingw32-${{ hashFiles('contrib/depends/**') }}
+
+      - name: Build libraries (boost, openssl, zeromq, ...)
+        run: make -C contrib/depends HOST=x86_64-w64-mingw32 -j"$(nproc)"
+
+      - name: Build groxd.exe, grox-wallet-rpc.exe, grox-wallet-cli.exe
+        run: |
+          cmake -S . -B build/win \
+            -DCMAKE_TOOLCHAIN_FILE="$PWD/contrib/depends/x86_64-w64-mingw32/share/toolchain.cmake" \
+            -DCMAKE_BUILD_TYPE=Release -DBUILD_TESTS=OFF -DUSE_DEVICE_TREZOR=OFF \
+            -DMANUAL_SUBMODULES=1 -DBUILD_TAG=win-x64
+          make -C build/win -j"$(nproc)" daemon simplewallet wallet_rpc_server
+          x86_64-w64-mingw32-strip build/win/bin/*.exe
+
+      - name: Check the binaries are self-contained
+        run: |
+          bad=0
+          for f in build/win/bin/*.exe; do
+            dlls=$(x86_64-w64-mingw32-objdump -p "$f" | awk '/DLL Name:/ {print $3}' | sort -u | tr '\n' ' ')
+            echo "$(basename "$f"): $dlls"
+            # only Windows system DLLs are allowed (no libstdc++, libwinpthread, boost, ...)
+            if echo "$dlls" | grep -qi '\blib[a-z0-9_+-]*\.dll'; then bad=1; fi
+          done
+          ls -la build/win/bin
+          exit $bad
+
+      - uses: actions/upload-artifact@v4
+        with:
+          name: win64-binaries
+          path: build/win/bin/*.exe
+          if-no-files-found: error
+
+  package:
+    needs: binaries
+    runs-on: windows-2022
+    defaults:
+      run:
+        shell: pwsh
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/download-artifact@v4
+        with:
+          name: win64-binaries
+          path: build/win/bin
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+
+      - name: Install Inno Setup
+        run: |
+          if (-not (Test-Path "${env:ProgramFiles(x86)}\Inno Setup 6\ISCC.exe")) { choco install innosetup -y --no-progress }
+
+      - name: Binaries run
+        run: |
+          foreach ($b in "groxd", "grox-wallet-rpc", "grox-wallet-cli") {
+            & "build\win\bin\$b.exe" --version
+            if ($LASTEXITCODE) { throw "$b.exe --version failed" }
+          }
+
+      - name: Build GroxWallet.exe, installer and portable zip
+        run: .\windows\build.ps1 -BinDir build\win\bin -OutDir dist
+
+      - name: Check the packaged app
+        run: |
+          $exe = "build\windows\dist\GroxWallet\GroxWallet.exe"
+          Start-Process -Wait $exe -ArgumentList "--self-check", "$PWD\selfcheck.json"
+          Get-Content selfcheck.json
+          python -c "import json,sys; c=json.load(open('selfcheck.json')); ok=c['frozen'] and c['html'] and c['icon'] and all(c['bins'].values()) and c['webview'] is True and c['tk'] is True; print('renderer:', c.get('renderer')); sys.exit(0 if ok else 1)"
+
+      - name: Solo-mine a regtest chain through GroxWallet.exe
+        timeout-minutes: 30
+        run: python windows\smoke_test.py -- build\windows\dist\GroxWallet\GroxWallet.exe
+
+      - name: Install and uninstall silently
+        run: |
+          $setup = (Get-ChildItem dist\GroxWallet-Setup-*.exe).FullName
+          Start-Process -Wait $setup -ArgumentList "/VERYSILENT", "/SUPPRESSMSGBOXES", "/NORESTART"
+          $app = "$env:LOCALAPPDATA\Programs\Grox Wallet"
+          foreach ($f in "GroxWallet.exe", "bin\groxd.exe", "bin\grox-wallet-rpc.exe", "README.txt") {
+            if (-not (Test-Path "$app\$f")) { throw "installer did not install $f" }
+          }
+          if (-not (Test-Path "$env:APPDATA\Microsoft\Windows\Start Menu\Programs\Grox Wallet.lnk")) { throw "no Start menu shortcut" }
+          Start-Process -Wait "$app\GroxWallet.exe" -ArgumentList "--self-check", "$PWD\installed.json"
+          Get-Content installed.json
+          Start-Process -Wait "$app\unins000.exe" -ArgumentList "/VERYSILENT", "/SUPPRESSMSGBOXES"
+          Start-Sleep 3
+          if (Test-Path "$app\GroxWallet.exe") { throw "uninstaller left the app behind" }
+          Write-Host "install + uninstall OK"
+
+      - uses: actions/upload-artifact@v4
+        with:
+          name: grox-windows
+          path: dist/*
+          if-no-files-found: error
