@@ -123,8 +123,14 @@ jobs:
 
       - name: Install and uninstall silently
         run: |
+          # like Windows Security's ransomware protection (Controlled folder access) or a
+          # broken OneDrive Documents: nothing may be written in Documents, Grox must still work
+          $docs = [Environment]::GetFolderPath("MyDocuments")
+          icacls $docs /deny "${env:USERNAME}:(OI)(CI)(W,AD)"
+          if ($LASTEXITCODE) { throw "could not lock Documents" }
           $setup = (Get-ChildItem dist\GroxWallet-Setup-*.exe).FullName
-          Start-Process -Wait $setup -ArgumentList "/VERYSILENT", "/SUPPRESSMSGBOXES", "/NORESTART"
+          $p = Start-Process -Wait -PassThru $setup -ArgumentList "/VERYSILENT", "/SUPPRESSMSGBOXES", "/NORESTART", "/LOG=$PWD\setup.log"
+          if ($p.ExitCode) { Get-Content setup.log -Tail 30; throw "installer failed (exit $($p.ExitCode))" }
           $app = "$env:LOCALAPPDATA\Programs\Grox Wallet"
           foreach ($f in "GroxWallet.exe", "bin\groxd.exe", "bin\grox-wallet-rpc.exe", "README.txt") {
             if (-not (Test-Path "$app\$f")) { throw "installer did not install $f" }
@@ -132,6 +138,10 @@ jobs:
           if (-not (Test-Path "$env:APPDATA\Microsoft\Windows\Start Menu\Programs\Grox Wallet.lnk")) { throw "no Start menu shortcut" }
           Start-Process -Wait "$app\GroxWallet.exe" -ArgumentList "--self-check", "$PWD\installed.json"
           Get-Content installed.json
+          $c = Get-Content installed.json | ConvertFrom-Json
+          if ($c.wallet_dir_writable -ne $true) { throw "the app can't write its wallet folder $($c.wallet_dir)" }
+          if ($c.wallet_dir -like "$docs*") { throw "wallets must not default to Documents" }
+          icacls $docs /remove:d "${env:USERNAME}" | Out-Null
           Start-Process -Wait "$app\unins000.exe" -ArgumentList "/VERYSILENT", "/SUPPRESSMSGBOXES"
           Start-Sleep 3
           if (Test-Path "$app\GroxWallet.exe") { throw "uninstaller left the app behind" }

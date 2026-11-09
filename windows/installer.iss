@@ -2,8 +2,10 @@
 ; Built by windows\build.ps1:  iscc /DAppVersion=1.0.0 /DSourceDir=<GroxWallet folder> /DOutputDir=dist installer.iss
 ;
 ; Installs for the current user only (no administrator rights needed) into
-; %LOCALAPPDATA%\Programs\Grox Wallet. Wallets (Documents\Grox) and the blockchain
-; (C:\ProgramData\grox) are never deleted by the uninstaller.
+; %LOCALAPPDATA%\Programs\Grox Wallet. It writes nothing outside that folder and the
+; Start menu: the app creates the wallet folder (C:\Users\<you>\Grox) itself. Never
+; use Documents here: ransomware protection / OneDrive can block it ("Error 2").
+; Wallets and the blockchain (C:\ProgramData\grox) are never deleted by the uninstaller.
 
 #ifndef AppVersion
   #define AppVersion "1.0.0"
@@ -54,15 +56,12 @@ UninstallAppRunningError=Grox Wallet is running. Close its window first (mining 
 [Tasks]
 Name: "desktopicon"; Description: "{cm:CreateDesktopIcon}"; GroupDescription: "{cm:AdditionalIcons}"
 
-[Dirs]
-Name: "{userdocs}\Grox"; Flags: uninsneveruninstall
-
 [Files]
 Source: "{#SourceDir}\*"; DestDir: "{app}"; Flags: ignoreversion recursesubdirs createallsubdirs
 
 [Icons]
 Name: "{autoprograms}\Grox Wallet"; Filename: "{app}\GroxWallet.exe"; Comment: "Grox wallet and solo mining"
-Name: "{autoprograms}\Grox wallet files"; Filename: "{userdocs}\Grox"; Comment: "Your Grox wallet files (back them up)"
+Name: "{autoprograms}\Grox wallet files"; Filename: "{%USERPROFILE}\Grox"; Comment: "Your Grox wallet files (back them up)"
 Name: "{autodesktop}\Grox Wallet"; Filename: "{app}\GroxWallet.exe"; Tasks: desktopicon
 
 [Run]
@@ -73,7 +72,7 @@ procedure CurUninstallStepChanged(CurUninstallStep: TUninstallStep);
 begin
   if (CurUninstallStep = usPostUninstall) and not UninstallSilent then
     MsgBox('Grox Wallet was removed.' + #13#10#13#10 +
-      'Your wallet files were kept in:' + #13#10 + ExpandConstant('{userdocs}\Grox') + #13#10#13#10 +
+      'Your wallet files were kept in:' + #13#10 + ExpandConstant('{%USERPROFILE}\Grox') + #13#10#13#10 +
       'The blockchain copy was kept in C:\ProgramData\grox (you can delete that folder to free space).',
       mbInformation, MB_OK);
 end;
