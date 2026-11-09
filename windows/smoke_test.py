@@ -54,6 +54,12 @@ def step(msg):
 
 
 def main():
+    # the temp folder has an Arabic name; Windows consoles (cp1252) can't print it otherwise
+    for stream in (sys.stdout, sys.stderr):
+        try:
+            stream.reconfigure(encoding="utf-8", errors="replace")
+        except Exception:
+            pass
     if "--" not in sys.argv:
         sys.exit(__doc__)
     cmd = sys.argv[sys.argv.index("--") + 1:]
