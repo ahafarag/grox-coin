@@ -1,0 +1,69 @@
+name: release
+
+# Builds the Linux release packages in public, from this repository's code.
+# Push a tag like v1.0.0 to publish a GitHub release with the packages + SHA256 files.
+on:
+  push:
+    tags: ["v*"]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  build:
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - os: ubuntu-22.04
+            ver: "22.04"
+          - os: ubuntu-24.04
+            ver: "24.04"
+    runs-on: ${{ matrix.os }}
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Install build dependencies
+        run: |
+          sudo apt-get update
+          sudo DEBIAN_FRONTEND=noninteractive apt-get install -y build-essential cmake pkg-config \
+            libssl-dev libzmq3-dev libunbound-dev libsodium-dev libunwind8-dev liblzma-dev \
+            libreadline-dev libexpat1-dev libpgm-dev libhidapi-dev libusb-1.0-0-dev libudev-dev \
+            libprotobuf-dev protobuf-compiler qttools5-dev-tools \
+            libboost-chrono-dev libboost-date-time-dev libboost-filesystem-dev libboost-locale-dev \
+            libboost-program-options-dev libboost-regex-dev libboost-serialization-dev \
+            libboost-system-dev libboost-thread-dev
+
+      - name: Build
+        run: |
+          mkdir -p build && cd build
+          cmake .. -DCMAKE_BUILD_TYPE=Release -DBUILD_TESTS=OFF -DUSE_DEVICE_TREZOR=OFF -DMANUAL_SUBMODULES=1
+          make -j"$(nproc)" daemon simplewallet wallet_rpc_server
+
+      - name: Package
+        run: ./release/package.sh "${{ matrix.ver }}"
+
+      - uses: actions/upload-artifact@v4
+        with:
+          name: grox-ubuntu${{ matrix.ver }}
+          path: dist/*
+
+  publish:
+    needs: build
+    if: startsWith(github.ref, 'refs/tags/')
+    runs-on: ubuntu-24.04
+    permissions:
+      contents: write
+    steps:
+      - uses: actions/download-artifact@v4
+        with:
+          path: dist
+          merge-multiple: true
+      - name: Create release
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          gh release create "${GITHUB_REF_NAME}" dist/* \
+            --repo "${GITHUB_REPOSITORY}" --title "Grox ${GITHUB_REF_NAME}" \
+            --notes "Linux x64 packages for Ubuntu 22.04 and 24.04 (also WSL). Built by GitHub Actions from tag ${GITHUB_REF_NAME}. Verify with the .sha256 files, or use install.sh which checks them for you."

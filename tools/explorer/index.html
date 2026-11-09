@@ -1,0 +1,277 @@
+<!doctype html>
+<html lang="en" dir="ltr">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Grox Explorer</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans+Arabic:wght@400;500;600;700&family=JetBrains+Mono:wght@500;700&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --bg: #0b0c0f; --panel: #14171d; --panel-2: #1a1e25; --line: #252a33;
+    --text: #ece9e2; --muted: #9097a1; --faint: #5d636d;
+    --gold: #f2b544; --gold-2: #ffd27a; --ember: #e0782f; --gold-ink: #1a1305;
+    --green: #5fd38d; --red: #ff6b6b; --blue: #7cb7ff;
+    --sans: "IBM Plex Sans Arabic", "Segoe UI", Tahoma, system-ui, sans-serif;
+    --mono: "JetBrains Mono", ui-monospace, Consolas, monospace;
+  }
+  * { box-sizing: border-box; }
+  html, body { margin: 0; background: var(--bg); color: var(--text); font-family: var(--sans); }
+  a { color: var(--gold-2); text-decoration: none; }
+  a:hover { text-decoration: underline; }
+  button, input { font: inherit; color: inherit; }
+  .num, .mono { font-family: var(--mono); font-variant-numeric: tabular-nums; direction: ltr; unicode-bidi: isolate; }
+  .hash { font-family: var(--mono); font-size: 13px; overflow-wrap: anywhere; direction: ltr; unicode-bidi: isolate; }
+  .hidden { display: none !important; }
+
+  header { border-bottom: 1px solid var(--line); background: rgba(11,12,15,.94); position: sticky; top: 0; z-index: 5; backdrop-filter: blur(8px); }
+  .bar { max-width: 1180px; margin: 0 auto; padding: 14px 24px; display: flex; gap: 16px; align-items: center; flex-wrap: wrap; }
+  .logo { display: flex; align-items: center; gap: 10px; font-weight: 700; letter-spacing: .14em; font-family: var(--mono); direction: ltr; color: var(--text); }
+  .logo:hover { text-decoration: none; }
+  .logo-mark { width: 30px; height: 30px; border-radius: 8px; display: grid; place-items: center;
+    background: conic-gradient(from 210deg, var(--gold), var(--ember), var(--gold-2), var(--gold)); color: var(--gold-ink); font-weight: 800; letter-spacing: 0; }
+  .logo small { color: var(--muted); letter-spacing: .06em; font-weight: 500; }
+  .search { flex: 1; min-width: 240px; display: flex; gap: 8px; }
+  .search input { flex: 1; background: var(--panel-2); border: 1px solid var(--line); border-radius: 12px; padding: 10px 14px; outline: none; direction: ltr; }
+  .search input:focus { border-color: var(--gold); }
+  .btn { border: 1px solid var(--line); background: var(--panel-2); border-radius: 12px; padding: 10px 16px; cursor: pointer; white-space: nowrap; }
+  .btn:hover { border-color: #3a414d; }
+  .btn.primary { background: linear-gradient(180deg, var(--gold-2), var(--gold)); color: var(--gold-ink); border-color: var(--gold); font-weight: 700; }
+
+  main { max-width: 1180px; margin: 0 auto; padding: 24px; }
+  .stats { display: grid; grid-template-columns: repeat(5, 1fr); gap: 12px; margin-bottom: 22px; }
+  .stat { background: var(--panel); border: 1px solid var(--line); border-radius: 14px; padding: 16px; }
+  .stat .l { color: var(--muted); font-size: 13px; }
+  .stat .v { font-size: 22px; font-weight: 700; margin-top: 6px; }
+  .card { background: var(--panel); border: 1px solid var(--line); border-radius: 16px; padding: 20px; margin-bottom: 20px; }
+  .card h2 { margin: 0 0 14px; font-size: 16px; color: var(--muted); font-weight: 600; display: flex; align-items: center; gap: 10px; }
+  .live { width: 8px; height: 8px; border-radius: 50%; background: var(--green); box-shadow: 0 0 10px var(--green); animation: blink 1.6s infinite; }
+  @keyframes blink { 50% { opacity: .35; } }
+  .tbl { width: 100%; overflow-x: auto; }
+  table { width: 100%; border-collapse: collapse; font-size: 14px; }
+  th { text-align: start; color: var(--faint); font-weight: 500; font-size: 12px; padding: 0 10px 10px; white-space: nowrap; }
+  td { padding: 11px 10px; border-top: 1px solid var(--line); white-space: nowrap; }
+  td.e, th.e { text-align: end; }
+  tr.new td { animation: flash 1.6s ease-out; }
+  @keyframes flash { from { background: rgba(242,181,68,.16); } to { background: transparent; } }
+  .pager { display: flex; justify-content: center; gap: 10px; margin-top: 16px; }
+  .kv { display: grid; grid-template-columns: 220px 1fr; gap: 0; }
+  .kv > div { padding: 11px 4px; border-top: 1px solid var(--line); }
+  .kv > div:nth-child(-n+2) { border-top: 0; }
+  .kv .k { color: var(--muted); }
+  .title { display: flex; align-items: baseline; gap: 12px; flex-wrap: wrap; margin: 4px 0 18px; }
+  .title h1 { margin: 0; font-size: 28px; }
+  .tag { font-size: 12px; padding: 3px 9px; border-radius: 99px; font-weight: 700; }
+  .tag.gold { background: rgba(242,181,68,.14); color: var(--gold); }
+  .tag.blue { background: rgba(124,183,255,.12); color: var(--blue); }
+  .tag.green { background: rgba(95,211,141,.12); color: var(--green); }
+  .tag.grey { background: rgba(140,146,156,.15); color: var(--muted); }
+  .note { color: var(--muted); font-size: 14px; line-height: 1.7; margin-top: 10px; }
+  .navbtns { display: flex; gap: 8px; margin-inline-start: auto; }
+  .err { text-align: center; padding: 60px 20px; color: var(--muted); }
+  .err b { display: block; font-size: 22px; color: var(--text); margin-bottom: 8px; }
+  footer { max-width: 1180px; margin: 0 auto; padding: 10px 24px 40px; color: var(--faint); font-size: 13px; }
+  @media (max-width: 820px) {
+    .stats { grid-template-columns: 1fr 1fr; }
+    .kv { grid-template-columns: 1fr; }
+    .kv > div.k { border-top: 1px solid var(--line); padding-bottom: 2px; }
+    .kv > div.v { border-top: 0; padding-top: 0; }
+    main, .bar { padding-left: 16px; padding-right: 16px; }
+    .hide-sm { display: none; }
+  }
+</style>
+</head>
+<body>
+<header>
+  <div class="bar">
+    <a class="logo" href="#/"><div class="logo-mark">G</div>GROX <small>EXPLORER</small></a>
+    <form class="search" id="searchForm">
+      <input id="q" placeholder="Block height, block hash or transaction hash" autocomplete="off" spellcheck="false">
+      <button class="btn primary" id="searchBtn">Search</button>
+    </form>
+    <button class="btn" id="langBtn">عربي</button>
+  </div>
+</header>
+
+<main id="view"></main>
+<footer id="foot"></footer>
+
+<script>
+const T = {
+  en: { search: 'Search', ph: 'Block height, block hash or transaction hash', height: 'Height', hashrate: 'Network hashrate', difficulty: 'Difficulty',
+        reward: 'Block reward', lastBlock: 'Last block', mempool: 'Mempool', latest: 'Latest blocks', age: 'Age', size: 'Size', txs: 'Txs',
+        hash: 'Hash', newer: '← Newer', older: 'Older →', block: 'Block', tx: 'Transaction', time: 'Time', confirmations: 'Confirmations',
+        prev: 'Previous block', next: 'Next block', nonce: 'Nonce', version: 'Version', coinbase: 'Coinbase (reward)', minerReward: 'Miner reward',
+        devFund: 'Dev fund (5%)', unlocks: 'Unlocks at height', transactions: 'Transactions', noTxs: 'No transactions in this block besides the reward.',
+        fee: 'Fee', inputs: 'Inputs', outputs: 'Outputs', ring: 'Ring size', inBlock: 'In block', pending: 'Pending (mempool)',
+        hiddenAmounts: 'Amounts, senders and receivers are hidden. That\'s Grox privacy (RingCT + ring signatures + stealth addresses). Only block rewards are public.',
+        keyImages: 'Key images', outKeys: 'One-time output keys', notFound: 'Nothing found', notFoundSub: 'Check the height or hash and try again.',
+        offline: 'Node unavailable', offlineSub: 'The explorer can\'t reach the Grox node right now.', mempoolTitle: 'Waiting for the next block',
+        empty: 'Empty', ago: ' ago', sec: 's', min: 'min', hr: 'h', day: 'd', foot: 'Grox is a hobby coin with no monetary value.',
+        premine: 'Includes the one-time 5% premine.', yes: 'yes' },
+  ar: { search: 'بحث', ph: 'رقم البلوك أو هاش البلوك أو هاش التحويل', height: 'الارتفاع', hashrate: 'سرعة الشبكة', difficulty: 'الصعوبة',
+        reward: 'مكافأة البلوك', lastBlock: 'آخر بلوك', mempool: 'في الانتظار', latest: 'آخر البلوكات', age: 'من', size: 'الحجم', txs: 'تحويلات',
+        hash: 'الهاش', newer: '→ الأحدث', older: 'الأقدم ←', block: 'بلوك', tx: 'تحويل', time: 'الوقت', confirmations: 'التأكيدات',
+        prev: 'البلوك السابق', next: 'البلوك التالي', nonce: 'Nonce', version: 'الإصدار', coinbase: 'المكافأة', minerReward: 'مكافأة المُعدِّن',
+        devFund: 'نصيب التطوير (5%)', unlocks: 'تتفتح عند البلوك', transactions: 'التحويلات', noTxs: 'مفيش تحويلات في البلوك ده غير المكافأة.',
+        fee: 'الرسوم', inputs: 'المدخلات', outputs: 'المخرجات', ring: 'حجم الحلقة', inBlock: 'في البلوك', pending: 'في الانتظار (لسه متأكدش)',
+        hiddenAmounts: 'المبالغ والمرسل والمستلم مخفيين. دي خصوصية Grox (RingCT وتوقيعات الحلقة والعناوين المخفية). مكافآت البلوكات بس هي اللي ظاهرة.',
+        keyImages: 'Key images', outKeys: 'مفاتيح المخرجات (لمرة واحدة)', notFound: 'مفيش نتيجة', notFoundSub: 'راجع الرقم أو الهاش وجرّب تاني.',
+        offline: 'الشبكة مش متاحة', offlineSub: 'المستكشف مش قادر يوصل لعقدة Grox دلوقتي.', mempoolTitle: 'مستنية البلوك الجاي',
+        empty: 'فاضية', ago: '', sec: ' ثانية', min: ' دقيقة', hr: ' ساعة', day: ' يوم', foot: 'Grox عملة هواية، ملهاش قيمة مالية.',
+        premine: 'فيه الـ5% المبدئية (مرة واحدة).', yes: 'أيوه' },
+};
+let LANG = lsGet('grox.lang') || ((navigator.language || '').toLowerCase().startsWith('ar') ? 'ar' : 'en');
+const t = k => T[LANG][k];
+function lsGet(k) { try { return localStorage.getItem(k); } catch (e) { return null; } }
+function lsSet(k, v) { try { localStorage.setItem(k, v); } catch (e) {} }
+const $ = id => document.getElementById(id);
+const esc = s => String(s ?? '').replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
+const fmt = (n, d = 4) => Number(n || 0).toLocaleString('en-US', { maximumFractionDigits: d });
+function hr(h) { return h >= 1e6 ? fmt(h / 1e6, 2) + ' MH/s' : h >= 1e3 ? fmt(h / 1e3, 2) + ' kH/s' : fmt(h, 0) + ' H/s'; }
+function ago(ts) {
+  const s = Math.max(0, Date.now() / 1000 - ts);
+  const v = s < 60 ? Math.floor(s) + t('sec') : s < 3600 ? Math.floor(s / 60) + t('min') : s < 86400 ? Math.floor(s / 3600) + t('hr') : Math.floor(s / 86400) + t('day');
+  return LANG === 'ar' ? 'من ' + v : v + t('ago');
+}
+function when(ts) { return new Date(ts * 1000).toLocaleString(LANG === 'ar' ? 'ar-EG' : 'en-GB'); }
+const short = h => h ? h.slice(0, 10) + '…' + h.slice(-6) : '';
+async function api(p) {
+  const r = await fetch(p);
+  const j = await r.json().catch(() => ({}));
+  if (!r.ok) { const e = new Error(j.error || r.status); e.status = r.status; throw e; }
+  return j;
+}
+
+function applyChrome() {
+  document.documentElement.lang = LANG; document.documentElement.dir = LANG === 'ar' ? 'rtl' : 'ltr';
+  $('q').placeholder = t('ph'); $('searchBtn').textContent = t('search');
+  $('langBtn').textContent = LANG === 'ar' ? 'English' : 'عربي';
+  $('foot').textContent = t('foot');
+}
+$('langBtn').onclick = () => { LANG = LANG === 'ar' ? 'en' : 'ar'; lsSet('grox.lang', LANG); applyChrome(); route(); };
+
+$('searchForm').onsubmit = async e => {
+  e.preventDefault();
+  const q = $('q').value.trim(); if (!q) return;
+  try { const r = await api('/api/search?q=' + encodeURIComponent(q)); location.hash = `#/${r.type}/${r.id}`; $('q').value = ''; }
+  catch (err) { showError(err); }
+};
+
+function showError(err) {
+  const off = err && err.status === 503;
+  $('view').innerHTML = `<div class="err"><b>${off ? t('offline') : t('notFound')}</b>${off ? t('offlineSub') : t('notFoundSub')}</div>`;
+}
+
+/* ---------------- home ---------------- */
+let homeTimer = null, seenTop = -1, page = null;
+async function renderHome(before) {
+  const [info, blocks, pool] = await Promise.all([api('/api/info'), api('/api/blocks?count=25' + (before ? '&before=' + before : '')), api('/api/mempool')]);
+  const isTop = !before;
+  const rows = blocks.blocks.map(b => `<tr class="${isTop && seenTop >= 0 && b.height > seenTop ? 'new' : ''}">
+      <td class="num"><a href="#/block/${b.height}">${b.height.toLocaleString('en-US')}</a></td>
+      <td>${ago(b.timestamp)}</td>
+      <td class="num">${fmt(b.reward, 4)}</td>
+      <td class="num">${b.txs}</td>
+      <td class="num hide-sm">${fmt(b.size, 0)} B</td>
+      <td class="hash hide-sm"><a href="#/block/${b.hash}">${short(b.hash)}</a></td></tr>`).join('');
+  if (isTop && blocks.blocks.length) seenTop = blocks.blocks[0].height;
+  const last = blocks.blocks.length ? blocks.blocks[blocks.blocks.length - 1].height : 0;
+  const poolRows = pool.txs.map(x => `<tr><td class="hash"><a href="#/tx/${x.hash}">${short(x.hash)}</a></td><td class="num">${fmt(x.fee, 8)}</td><td class="num">${fmt(x.size, 0)} B</td><td>${ago(x.received)}</td></tr>`).join('');
+  $('view').innerHTML = `
+    <div class="stats">
+      <div class="stat"><div class="l">${t('height')}</div><div class="v num">${info.height.toLocaleString('en-US')}</div></div>
+      <div class="stat"><div class="l">${t('hashrate')}</div><div class="v num">${hr(info.hashrate)}</div></div>
+      <div class="stat"><div class="l">${t('difficulty')}</div><div class="v num">${fmt(info.difficulty, 0)}</div></div>
+      <div class="stat"><div class="l">${t('reward')}</div><div class="v"><span class="num">${fmt(info.reward, 3)}</span> <small style="color:var(--muted);font-size:13px">GROX</small></div></div>
+      <div class="stat"><div class="l">${t('lastBlock')}</div><div class="v">${ago(info.last_block_time)}</div></div>
+    </div>
+    <div class="card">
+      <h2>${t('mempoolTitle')} <span class="tag grey num">${pool.txs.length}</span></h2>
+      ${pool.txs.length ? `<div class="tbl"><table><thead><tr><th>${t('hash')}</th><th>${t('fee')}</th><th>${t('size')}</th><th>${t('age')}</th></tr></thead><tbody>${poolRows}</tbody></table></div>` : `<div class="note">${t('empty')}</div>`}
+    </div>
+    <div class="card">
+      <h2>${isTop ? '<span class="live"></span>' : ''}${t('latest')}</h2>
+      <div class="tbl"><table>
+        <thead><tr><th>${t('height')}</th><th>${t('age')}</th><th>${t('reward')}</th><th>${t('txs')}</th><th class="hide-sm">${t('size')}</th><th class="hide-sm">${t('hash')}</th></tr></thead>
+        <tbody>${rows}</tbody></table></div>
+      <div class="pager">
+        ${before ? `<a class="btn" href="#/">${t('newer')}</a>` : ''}
+        ${last > 0 ? `<a class="btn" href="#/blocks/${last}">${t('older')}</a>` : ''}
+      </div>
+    </div>`;
+}
+
+/* ---------------- block ---------------- */
+async function renderBlock(id) {
+  const b = await api('/api/block?id=' + encodeURIComponent(id));
+  const cb = b.coinbase;
+  const txRows = b.transactions.map(x => `<tr><td class="hash"><a href="#/tx/${x.hash}">${short(x.hash)}</a></td><td class="num">${fmt(x.fee, 8)}</td><td class="num">${x.inputs}</td><td class="num">${x.outputs}</td><td class="num">${fmt(x.size, 0)} B</td></tr>`).join('');
+  $('view').innerHTML = `
+    <div class="title"><h1>${t('block')} <span class="num">#${b.height.toLocaleString('en-US')}</span></h1>
+      <span class="tag green">${b.confirmations} ${t('confirmations')}</span>
+      <div class="navbtns">
+        ${b.height > 0 ? `<a class="btn" href="#/block/${b.height - 1}">${LANG === 'ar' ? '→' : '←'} ${t('prev')}</a>` : ''}
+        ${b.confirmations > 0 ? `<a class="btn" href="#/block/${b.height + 1}">${t('next')} ${LANG === 'ar' ? '←' : '→'}</a>` : ''}
+      </div></div>
+    <div class="card"><div class="kv">
+      <div class="k">${t('hash')}</div><div class="v hash">${esc(b.hash)}</div>
+      <div class="k">${t('time')}</div><div class="v">${when(b.timestamp)} · ${ago(b.timestamp)}</div>
+      <div class="k">${t('difficulty')}</div><div class="v num">${fmt(b.difficulty, 0)}</div>
+      <div class="k">${t('size')}</div><div class="v num">${fmt(b.size, 0)} B</div>
+      <div class="k">${t('version')}</div><div class="v num">${esc(b.version)}</div>
+      <div class="k">${t('nonce')}</div><div class="v num">${b.nonce}</div>
+      <div class="k">${t('prev')}</div><div class="v hash">${b.height > 0 ? `<a href="#/block/${b.prev_hash}">${esc(b.prev_hash)}</a>` : '—'}</div>
+    </div></div>
+    <div class="card"><h2>${t('coinbase')}</h2><div class="kv">
+      <div class="k">${t('minerReward')}</div><div class="v"><span class="num">${fmt(cb.miner, 8)}</span> GROX</div>
+      ${cb.dev_fund ? `<div class="k">${t('devFund')}</div><div class="v"><span class="num">${fmt(cb.dev_fund, 8)}</span> GROX ${b.height === 2 ? `<span class="tag blue">${t('premine')}</span>` : ''}</div>` : ''}
+      <div class="k">${t('unlocks')}</div><div class="v num">${cb.unlock_height}</div>
+      <div class="k">${t('tx')}</div><div class="v hash"><a href="#/tx/${cb.hash}">${esc(cb.hash)}</a></div>
+    </div></div>
+    <div class="card"><h2>${t('transactions')} <span class="tag grey num">${b.transactions.length}</span></h2>
+      ${b.transactions.length ? `<div class="tbl"><table><thead><tr><th>${t('hash')}</th><th>${t('fee')}</th><th>${t('inputs')}</th><th>${t('outputs')}</th><th>${t('size')}</th></tr></thead><tbody>${txRows}</tbody></table></div>` : `<div class="note">${t('noTxs')}</div>`}
+    </div>`;
+}
+
+/* ---------------- tx ---------------- */
+async function renderTx(id) {
+  const x = await api('/api/tx?id=' + encodeURIComponent(id));
+  const status = x.in_pool ? `<span class="tag grey">${t('pending')}</span>` : `<span class="tag green">${x.confirmations} ${t('confirmations')}</span>`;
+  $('view').innerHTML = `
+    <div class="title"><h1>${t('tx')}</h1>${status}${x.coinbase ? `<span class="tag gold">${t('coinbase')}</span>` : ''}</div>
+    <div class="card"><div class="kv">
+      <div class="k">${t('hash')}</div><div class="v hash">${esc(x.hash)}</div>
+      ${x.height != null && !x.in_pool ? `<div class="k">${t('inBlock')}</div><div class="v num"><a href="#/block/${x.height}">#${x.height.toLocaleString('en-US')}</a></div>` : ''}
+      ${x.timestamp ? `<div class="k">${t('time')}</div><div class="v">${when(x.timestamp)} · ${ago(x.timestamp)}</div>` : ''}
+      ${x.coinbase ? '' : `<div class="k">${t('fee')}</div><div class="v"><span class="num">${fmt(x.fee, 11)}</span> GROX</div>`}
+      <div class="k">${t('inputs')}</div><div class="v num">${x.coinbase ? '—' : x.inputs}</div>
+      ${x.coinbase ? '' : `<div class="k">${t('ring')}</div><div class="v num">${x.ring_size}</div>`}
+      <div class="k">${t('outputs')}</div><div class="v num">${x.outputs}${x.coinbase ? ' · ' + x.output_amounts.map(a => fmt(a, 8)).join(' + ') + ' GROX' : ''}</div>
+      <div class="k">${t('size')}</div><div class="v num">${fmt(x.size, 0)} B</div>
+    </div>
+    ${x.coinbase ? '' : `<div class="note">🔒 ${t('hiddenAmounts')}</div>`}
+    </div>
+    ${x.key_images.length ? `<div class="card"><h2>${t('keyImages')}</h2>${x.key_images.map(k => `<div class="hash" style="padding:6px 0;color:var(--muted)">${esc(k)}</div>`).join('')}</div>` : ''}
+    <div class="card"><h2>${t('outKeys')}</h2>${x.output_keys.map(k => `<div class="hash" style="padding:6px 0;color:var(--muted)">${esc(k)}</div>`).join('')}</div>`;
+}
+
+/* ---------------- router ---------------- */
+async function route() {
+  clearInterval(homeTimer);
+  const parts = location.hash.replace(/^#\/?/, '').split('/');
+  try {
+    if (parts[0] === 'block' && parts[1]) await renderBlock(parts[1]);
+    else if (parts[0] === 'tx' && parts[1]) await renderTx(parts[1]);
+    else if (parts[0] === 'blocks' && parts[1]) await renderHome(parts[1]);
+    else { await renderHome(); homeTimer = setInterval(() => renderHome().catch(() => {}), 10000); }
+  } catch (err) { showError(err); }
+  window.scrollTo(0, 0);
+}
+window.addEventListener('hashchange', route);
+applyChrome();
+route();
+</script>
+</body>
+</html>
