@@ -3,8 +3,10 @@
 #
 #   curl -fsSL https://raw.githubusercontent.com/ahafarag/grox-coin/main/install.sh | bash
 #
-# Downloads the latest release from GitHub, checks its SHA256 checksum,
-# installs the libraries it needs and puts everything in ~/grox.
+# Downloads the latest release from GitHub and checks its SHA256 checksum.
+# If there is no ready package for your system, it builds Grox from this
+# repository's public source code instead (20-60 minutes, once).
+# Everything ends up in ~/grox.
 set -euo pipefail
 
 REPO="ahafarag/grox-coin"
@@ -17,9 +19,9 @@ fail() { printf '\n\033[1;31mError:\033[0m %s\n' "$*"; exit 1; }
 [ "$(uname -s)" = "Linux" ] || fail "Grox runs on Linux. On Windows, install Ubuntu from the Microsoft Store (WSL) and run this inside it."
 [ "$(uname -m)" = "x86_64" ] || fail "Only 64-bit Intel/AMD computers (x86_64) are supported for now."
 . /etc/os-release
-case "${ID:-}:${VERSION_ID:-}" in
-  ubuntu:24.04|ubuntu:22.04) ;;
-  *) fail "Ubuntu 22.04 or 24.04 is needed (found ${PRETTY_NAME:-unknown}). You can still build from source: see README." ;;
+case "${ID:-}" in
+  ubuntu|debian) ;;
+  *) fail "Ubuntu (22.04 / 24.04 recommended) or Debian is needed (found ${PRETTY_NAME:-unknown})." ;;
 esac
 
 ASSET="grox-linux-x64-ubuntu${VERSION_ID}.tar.gz"
@@ -34,12 +36,39 @@ sudo DEBIAN_FRONTEND=noninteractive apt-get install -y -qq curl python3 ca-certi
 
 TMP="$(mktemp -d)"
 trap 'rm -rf "$TMP"' EXIT
-say "Downloading $ASSET"
-curl -fL --progress-bar "$BASE/$ASSET" -o "$TMP/$ASSET"
-curl -fsSL "$BASE/$ASSET.sha256" -o "$TMP/$ASSET.sha256"
+PKG=""
 
-say "Checking the download is genuine (SHA256)"
-( cd "$TMP" && sha256sum -c "$ASSET.sha256" ) || fail "Checksum mismatch, the download is damaged or was changed. Nothing was installed."
+say "Looking for a ready package ($ASSET)"
+if [ -z "${GROX_FROM_SOURCE:-}" ] && curl -fsL "$BASE/$ASSET" -o "$TMP/$ASSET" 2>/dev/null \
+   && curl -fsL "$BASE/$ASSET.sha256" -o "$TMP/$ASSET.sha256" 2>/dev/null; then
+  say "Checking the download is genuine (SHA256)"
+  ( cd "$TMP" && sha256sum -c "$ASSET.sha256" ) || fail "Checksum mismatch, the download is damaged or was changed. Nothing was installed."
+  PKG="$TMP/$ASSET"
+else
+  say "No ready package, building Grox from source (20-60 minutes, only once)"
+  sudo DEBIAN_FRONTEND=noninteractive apt-get install -y -qq git build-essential cmake pkg-config \
+    libprotobuf-dev protobuf-compiler qttools5-dev-tools >/dev/null
+  SRC="${GROX_SRC:-$HOME/grox-src}"
+  if [ -d "$SRC/.git" ]; then
+    git -C "$SRC" pull -q --ff-only
+  else
+    git clone -q --depth 1 "https://github.com/$REPO.git" "$SRC"
+  fi
+  # each compile job needs ~1.5 GB RAM; don't overload small machines
+  MEM_GB=$(awk '/MemTotal/ {print int($2/1024/1024)}' /proc/meminfo)
+  JOBS=$(( MEM_GB * 2 / 3 )); [ "$JOBS" -lt 1 ] && JOBS=1
+  [ "$JOBS" -gt "$(nproc)" ] && JOBS=$(nproc)
+  [ "$MEM_GB" -lt 3 ] && echo "Note: this machine has ${MEM_GB} GB RAM. If the build fails, add swap (2-4 GB) and run again."
+  mkdir -p "$SRC/build"
+  ( cd "$SRC/build" \
+    && cmake .. -DCMAKE_BUILD_TYPE=Release -DBUILD_TESTS=OFF -DUSE_DEVICE_TREZOR=OFF -DMANUAL_SUBMODULES=1 >/dev/null \
+    && echo "Compiling with $JOBS job(s)... (this is the long part)" \
+    && make -j"$JOBS" daemon simplewallet wallet_rpc_server 2>&1 | grep -E --line-buffered "^\[ *[0-9]+%\]" | awk '{ if ($2 != last) { printf "\r  %s", $2; last = $2 } } END { print "" }' ) \
+    || fail "Build failed. Check that the machine has enough RAM (add swap) and try again."
+  [ -x "$SRC/build/bin/groxd" ] || fail "Build failed (groxd missing). Run it again, or see README to build by hand."
+  "$SRC/release/package.sh" "${VERSION_ID:-src}" >/dev/null
+  PKG="$SRC/dist/$ASSET"
+fi
 
 say "Installing to $DEST"
 if [ -d "$DEST" ]; then
@@ -47,7 +76,7 @@ if [ -d "$DEST" ]; then
   sleep 2
 fi
 mkdir -p "$DEST"
-tar -xzf "$TMP/$ASSET" -C "$DEST" --strip-components=1
+tar -xzf "$PKG" -C "$DEST" --strip-components=1
 
 cat <<EOF
 
