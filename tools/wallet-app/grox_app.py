@@ -587,8 +587,8 @@ def api_quit(_body):
 
 
 def mining_active():
-    try:
-        return bool(daemon_other("mining_status").get("active"))
+    try:  # short timeout: the desktop app asks this while its window is closing
+        return bool(_post(CFG.daemon + "/mining_status", {}, timeout=3).get("active"))
     except Exception:
         return False
 
