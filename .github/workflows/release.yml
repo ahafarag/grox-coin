@@ -1,8 +1,8 @@
 name: release
 
-# Builds the Linux release packages in public, from this repository's code.
-# Changing release/VERSION on main publishes GitHub release v<VERSION>
-# with the packages + SHA256 files.
+# Builds the Linux release packages and the Windows wallet (windows.yml) in public,
+# from this repository's code. Changing release/VERSION on main publishes GitHub
+# release v<VERSION> with the packages + SHA256 files.
 on:
   push:
     branches: [main]
@@ -51,8 +51,11 @@ jobs:
           name: grox-ubuntu${{ matrix.ver }}
           path: dist/*
 
+  windows:
+    uses: ./.github/workflows/windows.yml
+
   publish:
-    needs: build
+    needs: [build, windows]
     if: github.ref == 'refs/heads/main'
     runs-on: ubuntu-24.04
     permissions:
@@ -62,6 +65,7 @@ jobs:
       - uses: actions/download-artifact@v4
         with:
           path: dist
+          pattern: grox-*
           merge-multiple: true
       - name: Create release
         env:
@@ -73,5 +77,5 @@ jobs:
           else
             gh release create "$TAG" dist/* --target "$GITHUB_SHA" \
               --repo "$GITHUB_REPOSITORY" --title "Grox $TAG" \
-              --notes "Linux x64 packages for Ubuntu 22.04 and 24.04 (also WSL). Built by GitHub Actions from commit $GITHUB_SHA. Verify with the .sha256 files, or use install.sh which checks them for you."
+              --notes "Windows: download GroxWallet-Setup-*-win-x64.exe (installer) or the portable zip. Linux: x64 packages for Ubuntu 22.04 and 24.04 (also WSL), or use install.sh which checks the SHA256 for you. Built by GitHub Actions from commit $GITHUB_SHA. Verify downloads with the .sha256 files."
           fi
