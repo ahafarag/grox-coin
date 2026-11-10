@@ -2,6 +2,8 @@
 
 **A private coin you mine with your own computer. No mining rigs, no farms: one CPU, one fair chance.**
 
+**⛏️ Join mining: [say hi and get started in Discussions](https://github.com/ahafarag/grox-coin/discussions/4)**
+
 [العربية ↓](#العربية)
 
 | | |
