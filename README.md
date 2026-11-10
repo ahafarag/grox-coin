@@ -18,6 +18,8 @@
 > - Discord: **https://discord.gg/V5PaU3SSY**
 >
 > Admins never DM you first and never ask for your 25 words.
+>
+> **Use at your own risk.** Grox is provided "as is", with no warranty and no liability for any loss or damage. Not financial advice. Read the full [DISCLAIMER](DISCLAIMER.md).
 
 | | |
 |---|---|
@@ -147,6 +149,7 @@ BSD-3-Clause, see [LICENSE](LICENSE).
 > نزّل Grox **من GitHub ده بس**، ومتكتبش الـ25 كلمة في أي موقع أبداً.
 > اللينكات الرسمية الوحيدة هي اللي فوق في الصندوق الأحمر (GitHub، صفحة GitHub، المستكشف، Telegram، Discord).
 > الأدمن عمره ما هيبعتلك رسالة الأول أو يطلب منك الـ25 كلمة.
+> **الاستخدام على مسؤوليتك.** Grox بتتقدّم "زي ما هي" من غير أي ضمان، ومن غير أي مسؤولية عن أي خسارة أو ضرر. ومفيش هنا أي نصيحة مالية. التفاصيل في [DISCLAIMER](DISCLAIMER.md).
 
 
 **عملة رقمية خاصة بتتعدّن بجهازك العادي. مفيش أجهزة تعدين ولا مزارع: كل معالج ليه فرصة.**
