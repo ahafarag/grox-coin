@@ -28,6 +28,20 @@ ATOMIC = 10 ** 11  # 1 GROX = 10^11 groxatoms
 # PyInstaller (GroxWallet.exe) unpacks bundled files (index.html) into sys._MEIPASS
 HERE = getattr(sys, "_MEIPASS", None) or os.path.dirname(os.path.abspath(__file__))
 IS_WIN = os.name == "nt"
+
+
+def _app_version():
+    """release/VERSION, shipped next to this file in the packages."""
+    for p in (os.path.join(HERE, "VERSION"), os.path.join(HERE, "..", "..", "release", "VERSION")):
+        try:
+            with open(p, encoding="utf-8") as f:
+                return f.read().strip()
+        except OSError:
+            pass
+    return ""
+
+
+APP_VERSION = _app_version()
 EXE = ".exe" if IS_WIN else ""
 CREATE_NO_WINDOW = 0x08000000  # Windows: don't flash a console window for groxd / grox-wallet-rpc
 
@@ -370,7 +384,7 @@ def api_open(body):
             if "password" in msg.lower():
                 raise RpcError("كلمة السر غلط")
             if "opened by another" in msg:
-                raise RpcError("المحفظة مفتوحة في برنامج تاني (grox-wallet-cli). اقفلها هناك الأول.")
+                raise RpcError("المحفظة مفتوحة في برنامج تاني (grox-wallet-cli أو نسخة قديمة من grox-wallet-rpc). اقفله الأول، أو اعمل ريستارت للجهاز.")
             raise
         STATE["wallet_file"] = name
     return {"ok": True}
@@ -436,7 +450,7 @@ def api_lock(_body):
 
 
 def api_state(_body):
-    out = {"node": None, "mining": None, "wallet": None, "network": "testnet" if CFG.testnet else "mainnet"}
+    out = {"node": None, "mining": None, "wallet": None, "network": "testnet" if CFG.testnet else "mainnet", "app": {"version": APP_VERSION, "windows": IS_WIN}}
     try:
         info = daemon_json("get_info")
         out["node"] = {
@@ -648,7 +662,7 @@ EN_ERRORS = {
     "أقصى عدد أرقام بعد العلامة العشرية 11": "Too many decimals (max 11)",
     "المحفظة غير موجودة": "Wallet not found",
     "كلمة السر غلط": "Wrong password",
-    "المحفظة مفتوحة في برنامج تاني (grox-wallet-cli). اقفلها هناك الأول.": "This wallet is open in another program (grox-wallet-cli). Close it there first.",
+    "المحفظة مفتوحة في برنامج تاني (grox-wallet-cli أو نسخة قديمة من grox-wallet-rpc). اقفله الأول، أو اعمل ريستارت للجهاز.": "This wallet is open in another program (grox-wallet-cli or an old grox-wallet-rpc). Close it first, or restart the computer.",
     "افتح محفظتك الأول، المكافآت بتروح على عنوانها": "Open your wallet first, mining rewards go to its address",
     "الشبكة لسه بتتزامن، جرّب كمان شوية": "The node is still synchronizing, try again in a moment",
     "أمر غير معروف": "Unknown action",

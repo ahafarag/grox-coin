@@ -57,6 +57,7 @@ python -m PyInstaller --noconfirm --clean --windowed --name GroxWallet `
   --version-file (Join-Path $Work "version.txt") `
   --add-data "$(Join-Path $Root 'tools\wallet-app\index.html')$($sep)." `
   --add-data "$(Join-Path $Root 'windows\grox.ico')$($sep)." `
+  --add-data "$(Join-Path $Root 'release\VERSION')$($sep)." `
   --paths (Join-Path $Root "tools\wallet-app") `
   --distpath (Join-Path $Work "dist") --workpath (Join-Path $Work "pyi") --specpath $Work `
   (Join-Path $Root "windows\grox_wallet.py")

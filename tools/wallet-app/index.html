@@ -130,6 +130,10 @@
   .final-cta h2 { margin: 0 0 10px; font-size: 30px; }
   .final-cta p { color: var(--muted); margin: 0 0 24px; }
   footer { max-width: 1180px; margin: 0 auto; padding: 40px 28px 50px; color: var(--faint); font-size: 13px; display: flex; gap: 16px; flex-wrap: wrap; justify-content: space-between; }
+  .about { flex-basis: 100%; display: flex; flex-wrap: wrap; gap: 8px 20px; align-items: center; padding-top: 14px; border-top: 1px solid var(--line); }
+  .about a { color: var(--muted); text-decoration: underline; text-underline-offset: 3px; }
+  .about a:hover { color: var(--gold); }
+  .about b { color: var(--muted); }
 
   /* ====================== MODALS ====================== */
   .modal-bg { position: fixed; inset: 0; background: rgba(5,6,8,.75); backdrop-filter: blur(4px); z-index: 40; display: grid; place-items: center; padding: 16px; }
@@ -305,6 +309,14 @@
   <footer>
     <span><span data-en="Grox is a hobby coin for mining and fun. It has no monetary value and is not an investment.">Grox عملة هواية للتعدين والتجربة، ملهاش قيمة مالية ومش استثمار.</span></span>
     <span><span data-en="Never send your 25 words to anyone, not even to us.">الـ25 كلمة بتاعتك متتبعتش لحد، ولا حتى لينا.</span></span>
+    <div class="about">
+    <span><b>Grox</b> <span class="appVer"></span></span>
+    <span><span data-en="Made by Abdelrahman Farag">من تطوير عبدالرحمن فرج</span></span>
+    <a href="https://github.com/ahafarag" target="_blank" rel="noopener">GitHub @ahafarag</a>
+    <a class="guideLink" href="https://github.com/ahafarag/grox-coin/blob/main/docs/GUIDE.md" target="_blank" rel="noopener"><span data-en="User guide">دليل الاستخدام</span></a>
+    <a href="https://d7vz9sqd109ta.cloudfront.net" target="_blank" rel="noopener"><span data-en="Block explorer">مستكشف البلوكات</span></a>
+    <a href="https://github.com/ahafarag/grox-coin/issues" target="_blank" rel="noopener"><span data-en="Report a problem">بلّغ عن مشكلة</span></a>
+  </div>
   </footer>
 </div>
 
@@ -381,6 +393,16 @@
       </div>
     </section>
   </main>
+  <footer>
+    <div class="about">
+    <span><b>Grox</b> <span class="appVer"></span></span>
+    <span><span data-en="Made by Abdelrahman Farag">من تطوير عبدالرحمن فرج</span></span>
+    <a href="https://github.com/ahafarag" target="_blank" rel="noopener">GitHub @ahafarag</a>
+    <a class="guideLink" href="https://github.com/ahafarag/grox-coin/blob/main/docs/GUIDE.md" target="_blank" rel="noopener"><span data-en="User guide">دليل الاستخدام</span></a>
+    <a href="https://d7vz9sqd109ta.cloudfront.net" target="_blank" rel="noopener"><span data-en="Block explorer">مستكشف البلوكات</span></a>
+    <a href="https://github.com/ahafarag/grox-coin/issues" target="_blank" rel="noopener"><span data-en="Report a problem">بلّغ عن مشكلة</span></a>
+  </div>
+  </footer>
 </div>
 
 <!-- ============================ MODALS ============================ -->
@@ -471,7 +493,15 @@ function applyLang() {
   });
   document.querySelectorAll('.langbtn').forEach(b => b.textContent = LANG === 'ar' ? 'English' : 'عربي');
   document.title = L('Grox | عدّن من جهازك', 'Grox | Mine from your computer');
+  renderAbout(state);
   if (state) { renderLanding(state); if (!$('dash').classList.contains('hidden')) renderDash(state); }
+}
+function renderAbout(s) {
+  const app = (s && s.app) || {};
+  const ver = app.version || ((s && s.node && s.node.version) || '').split('-')[0];
+  document.querySelectorAll('.appVer').forEach(e => e.textContent = ver ? 'v' + ver : '');
+  const doc = app.windows ? (LANG === 'ar' ? 'WINDOWS.md#العربية' : 'WINDOWS.md') : (LANG === 'ar' ? 'GUIDE.ar.md' : 'GUIDE.md');
+  document.querySelectorAll('.guideLink').forEach(a => a.href = 'https://github.com/ahafarag/grox-coin/blob/main/docs/' + doc);
 }
 function toggleLang() { LANG = LANG === 'ar' ? 'en' : 'ar'; lsSet('grox.lang', LANG); applyLang(); }
 async function api(path, body) {
@@ -679,7 +709,7 @@ function renderDash(s) {
 }
 async function refresh() {
   if (busy) return; busy = true;
-  try { state = await api('/api/state'); renderLanding(state); if (!$('dash').classList.contains('hidden')) renderDash(state); }
+  try { state = await api('/api/state'); renderAbout(state); renderLanding(state); if (!$('dash').classList.contains('hidden')) renderDash(state); }
   catch (e) { $('nodeDot').className = 'dot bad'; $('nodeTxt').textContent = L('البرنامج مقفول', 'App offline'); }
   busy = false;
 }
