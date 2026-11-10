@@ -207,6 +207,13 @@ namespace cryptonote
     {
       return true;
     }
+    // mainnet (v1.2.1)
+    ADD_CHECKPOINT(2,    "45db0e598f4e8e4b359ff33b048ef96dce26a9c999a26415a048ec71a7fcc03e"); // premine block
+    ADD_CHECKPOINT(500,  "0fac91a3192adfb24c02ed52673a2e4f3a65276b80ad9cd1278b1b0d19b176b9");
+    ADD_CHECKPOINT(1000, "67d09bdb4fb18f57f8997a64f8f4f25bbc75e7bd32bfb7c57dd671308dbed392");
+    ADD_CHECKPOINT(1500, "6dc97d78b5216ddbbb18085b13c41998a9708da9f3c453614501b2faa4f6470a");
+    ADD_CHECKPOINT(2000, "0470c9fc07be2b8120f246cb00dfa0b73e97b7cd6e42306d7c8a792cb7b2b591");
+    ADD_CHECKPOINT(2500, "e687c5e15653fc2cd868c21a86bd00432ad4bef7a251f8678546f9f5f94db6af");
     return true;
   }
 

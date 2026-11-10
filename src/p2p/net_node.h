@@ -295,7 +295,7 @@ namespace nodetool
     virtual void clear_used_stripe_peers();
 
   private:
-    const std::vector<std::string> m_seed_nodes_list = {};
+    const std::vector<std::string> m_seed_nodes_list = { "seeds.grox.zenithcodigo.com" }; // mainnet DNS seeds (A records), IP seeds stay as fallback
 
     bool islimitup=false;
     bool islimitdown=false;
