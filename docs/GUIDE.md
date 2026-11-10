@@ -169,6 +169,10 @@ connect to yours.
 
 ## 10. Block explorer
 
+Public explorer, nothing to install: **https://d7vz9sqd109ta.cloudfront.net**
+
+Or run your own copy against your own node:
+
 ```bash
 ~/grox/explorer.sh
 ```

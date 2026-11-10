@@ -732,7 +732,8 @@ namespace nodetool
     }
     else
     {
-      full_addrs.insert("35.43.98.226:19880");   // Grox public seed node
+      full_addrs.insert("35.43.98.226:19880");   // Grox seed node 1
+      full_addrs.insert("3.127.129.171:19880");  // Grox seed node 2
     }
     return full_addrs;
   }

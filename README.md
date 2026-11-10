@@ -16,8 +16,11 @@
 | Privacy | Monero technology: stealth addresses, ring signatures (16), RingCT |
 | Addresses | start with `G` |
 | P2P port | 19880 |
+| Explorer | **https://d7vz9sqd109ta.cloudfront.net** |
 
 ---
+
+🔎 **Block explorer:** https://d7vz9sqd109ta.cloudfront.net
 
 📖 **Full step-by-step guide:** [English](docs/GUIDE.md) · [العربية](docs/GUIDE.ar.md)
 
@@ -116,6 +119,7 @@ BSD-3-Clause, see [LICENSE](LICENSE).
 | مكافأة البلوك | حوالي 4.76 في الأول، وبتقل ببطء على سنين |
 | للمطوّر | **5%** مرة واحدة في البلوك 2، و**5%** من كل بلوك، والقاعدتين في الكود وكل الشبكة بتتأكد منهم |
 | الخصوصية | تقنية Monero: محدش يقدر يشوف رصيد حد من عنوانه |
+| المستكشف | **https://d7vz9sqd109ta.cloudfront.net** |
 
 
 📖 **الدليل الكامل خطوة بخطوة:** [بالعربي](docs/GUIDE.ar.md)
