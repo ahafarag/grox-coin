@@ -199,8 +199,9 @@ Logs: node `~/.grox/grox.log`, wallet `~/grox-wallet-app-rpc.log`.
 
 **Where can I ask for help?** On Discord: https://discord.gg/V5PaU3SSY (#mining-help), on Telegram: https://t.me/grox_community (Mining Help topic), or open an issue on GitHub.
 
-**Is Grox worth money?** No. Grox is a hobby coin for mining and fun. It has no monetary
-value, is not an investment, and nothing is sold.
+**Is Grox worth money?** Grox has no market price yet: it isn't listed on any exchange and the
+developer doesn't sell coins. Like any coin, its value grows with the community that mines and
+uses it. Nothing here is financial advice.
 
 **Why only CPUs?** Grox uses RandomX v2, which is designed for normal processors.
 Specialised mining hardware doesn't help. Everyone with a computer gets a fair chance.
