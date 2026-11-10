@@ -6,6 +6,19 @@
 
 [العربية ↓](#العربية)
 
+> [!CAUTION]
+> **GROX HAS NO OFFICIAL WEBSITE. ANY `grox` DOMAIN (.COM, .ORG, .NET, .IO OR ANY OTHER) IS FAKE.**
+> Download Grox **only** from this GitHub repository. Never type your 25 words into any website.
+>
+> **The only official links:**
+> - Code and downloads: **https://github.com/ahafarag/grox-coin** ([releases](https://github.com/ahafarag/grox-coin/releases/latest), each with a SHA256 checksum)
+> - Grox page: **https://ahafarag.github.io/grox-coin/** (hosted by GitHub, same account)
+> - Block explorer: **https://d7vz9sqd109ta.cloudfront.net**
+> - Telegram news: **[@grox_coin](https://t.me/grox_coin)** · Telegram group: **[@grox_community](https://t.me/grox_community)** · bot: **[@grox_coin_bot](https://t.me/grox_coin_bot)**
+> - Discord: **https://discord.gg/V5PaU3SSY**
+>
+> Admins never DM you first and never ask for your 25 words.
+
 | | |
 |---|---|
 | Ticker | **GROX** |
@@ -129,6 +142,12 @@ BSD-3-Clause, see [LICENSE](LICENSE).
 <div dir="rtl">
 
 ## العربية
+
+> **⚠️ Grox ملهاش أي موقع رسمي. أي دومين باسم grox (‎.COM أو ‎.ORG أو ‎.NET أو غيره) مزيّف.**
+> نزّل Grox **من GitHub ده بس**، ومتكتبش الـ25 كلمة في أي موقع أبداً.
+> اللينكات الرسمية الوحيدة هي اللي فوق في الصندوق الأحمر (GitHub، صفحة GitHub، المستكشف، Telegram، Discord).
+> الأدمن عمره ما هيبعتلك رسالة الأول أو يطلب منك الـ25 كلمة.
+
 
 **عملة رقمية خاصة بتتعدّن بجهازك العادي. مفيش أجهزة تعدين ولا مزارع: كل معالج ليه فرصة.**
 

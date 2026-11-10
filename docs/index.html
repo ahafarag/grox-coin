@@ -1,0 +1,137 @@
+<!doctype html>
+<html lang="en" dir="ltr">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Grox (GROX) | Fair CPU mining</title>
+<meta name="description" content="Grox (GROX): a private coin you mine with your own computer. RandomX v2, 1-minute blocks, 21M max supply. Official page, hosted by GitHub.">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans+Arabic:wght@400;500;600;700&family=JetBrains+Mono:wght@500;700&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --bg: #0b0c0f; --bg-2: #101217; --panel: #14171d; --panel-2: #1a1e25; --line: #252a33;
+    --text: #ece9e2; --muted: #9097a1; --faint: #5d636d;
+    --gold: #f2b544; --gold-2: #ffd27a; --gold-ink: #1a1305; --red: #ff6b6b;
+    --sans: "IBM Plex Sans Arabic", system-ui, -apple-system, "Segoe UI", sans-serif;
+    --mono: "JetBrains Mono", ui-monospace, monospace;
+  }
+  * { box-sizing: border-box; }
+  html, body { margin: 0; background: var(--bg); color: var(--text); font-family: var(--sans); line-height: 1.6; }
+  a { color: var(--gold); }
+  .wrap { max-width: 1080px; margin: 0 auto; padding: 0 24px; }
+  nav { display: flex; align-items: center; gap: 14px; padding: 22px 0; }
+  .logo { display: flex; align-items: center; gap: 10px; font-weight: 700; letter-spacing: .18em; }
+  .mark { width: 34px; height: 34px; border-radius: 10px; display: grid; place-items: center; font-weight: 700;
+          background: linear-gradient(160deg, var(--gold-2), #e08a1e); color: var(--gold-ink); letter-spacing: 0; }
+  .spacer { flex: 1; }
+  .btn { display: inline-flex; align-items: center; gap: 8px; padding: 12px 18px; border-radius: 12px; border: 1px solid var(--line);
+         background: var(--panel-2); color: var(--text); text-decoration: none; font-weight: 600; cursor: pointer; font: inherit; }
+  .btn.primary { background: linear-gradient(180deg, var(--gold-2), var(--gold)); color: var(--gold-ink); border-color: var(--gold); }
+  .btn.small { padding: 8px 12px; font-size: 14px; }
+  .warn { border: 1px solid rgba(255,107,107,.45); background: rgba(255,107,107,.08); border-radius: 14px; padding: 14px 18px; margin: 6px 0 0; font-size: 15px; }
+  .warn b { color: #ffb3b3; }
+  .hero { padding: 64px 0 40px; }
+  h1 { font-size: clamp(36px, 6vw, 64px); line-height: 1.08; margin: 0 0 18px; }
+  h1 .hl { color: var(--gold); }
+  .lead { color: var(--muted); font-size: 19px; max-width: 640px; margin: 0 0 28px; }
+  .cta { display: flex; flex-wrap: wrap; gap: 12px; }
+  section { padding: 40px 0; }
+  h2 { font-size: 28px; margin: 0 0 18px; }
+  .grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(230px, 1fr)); gap: 14px; }
+  .card { background: var(--panel); border: 1px solid var(--line); border-radius: 16px; padding: 20px; }
+  .card h3 { margin: 0 0 6px; font-size: 18px; }
+  .card p { margin: 0; color: var(--muted); }
+  .n { font-family: var(--mono); color: var(--gold); font-size: 14px; }
+  table { width: 100%; border-collapse: collapse; }
+  td { padding: 10px 12px; border-bottom: 1px solid var(--line); vertical-align: top; }
+  td:first-child { color: var(--muted); width: 38%; }
+  code, .mono { font-family: var(--mono); font-size: 13px; word-break: break-all; }
+  pre { background: var(--bg-2); border: 1px solid var(--line); border-radius: 12px; padding: 14px; overflow-x: auto; }
+  .links li { margin: 6px 0; }
+  footer { color: var(--faint); font-size: 13px; padding: 40px 0 60px; border-top: 1px solid var(--line); margin-top: 30px; }
+  [lang-ar] { display: none; }
+  html[lang=ar] [lang-ar] { display: initial; }
+  html[lang=ar] [lang-en] { display: none; }
+  @media (max-width: 560px) { .hero { padding-top: 32px; } .lead { font-size: 17px; } }
+</style>
+</head>
+<body>
+<div class="wrap">
+  <nav>
+    <div class="logo"><div class="mark">G</div>GROX</div>
+    <div class="spacer"></div>
+    <a class="btn small" href="https://github.com/ahafarag/grox-coin">GitHub</a>
+    <button class="btn small" id="lang">عربي</button>
+  </nav>
+
+  <div class="warn">
+    <span lang-en><b>Grox has no official website.</b> Any grox domain (.com, .org, .net or any other) is fake. Download only from <a href="https://github.com/ahafarag/grox-coin/releases/latest">GitHub</a>, and never type your 25 words into a website.</span>
+    <span lang-ar><b>Grox ملهاش أي موقع رسمي.</b> أي دومين باسم grox (.com أو .org أو غيره) مزيّف. نزّل من <a href="https://github.com/ahafarag/grox-coin/releases/latest">GitHub</a> بس، ومتكتبش الـ25 كلمة في أي موقع.</span>
+  </div>
+
+  <header class="hero">
+    <h1><span lang-en>Mine <span class="hl">Grox</span><br>on your everyday computer</span><span lang-ar>عدّن <span class="hl">Grox</span><br>من جهازك العادي</span></h1>
+    <p class="lead"><span lang-en>A private coin you mine with any CPU. No mining rigs, no farms: every computer gets a real chance to find blocks.</span><span lang-ar>عملة رقمية خاصة بتتعدّن بأي معالج. مفيش أجهزة تعدين ولا مزارع: كل كمبيوتر ليه فرصة حقيقية يلاقي بلوكات.</span></p>
+    <div class="cta">
+      <a class="btn primary" href="https://github.com/ahafarag/grox-coin/releases/latest">⬇ <span lang-en>Download for Windows / Linux</span><span lang-ar>تحميل لويندوز / لينكس</span></a>
+      <a class="btn" href="https://github.com/ahafarag/grox-coin/blob/main/docs/GUIDE.md"><span lang-en>Step-by-step guide</span><span lang-ar>الدليل خطوة بخطوة</span></a>
+      <a class="btn" href="https://d7vz9sqd109ta.cloudfront.net"><span lang-en>Block explorer</span><span lang-ar>مستكشف البلوكات</span></a>
+    </div>
+  </header>
+
+  <section>
+    <h2><span lang-en>Start in 3 steps</span><span lang-ar>٣ خطوات وتبدأ</span></h2>
+    <div class="grid">
+      <div class="card"><div class="n">01</div><h3><span lang-en>Install</span><span lang-ar>ثبّت</span></h3><p><span lang-en>Windows: run the Grox Wallet installer. Linux: one install command.</span><span lang-ar>ويندوز: شغّل برنامج التثبيت. لينكس: أمر واحد.</span></p></div>
+      <div class="card"><div class="n">02</div><h3><span lang-en>Create a wallet</span><span lang-ar>اعمل محفظة</span></h3><p><span lang-en>Pick a password and write your 25 words on paper. They are your coins.</span><span lang-ar>اختار كلمة سر واكتب الـ25 كلمة على ورقة. دول هما فلوسك.</span></p></div>
+      <div class="card"><div class="n">03</div><h3><span lang-en>Press Start mining</span><span lang-ar>دوس ابدأ التعدين</span></h3><p><span lang-en>Your computer searches for blocks. Rewards land straight in your wallet.</span><span lang-ar>جهازك بيدوّر على بلوكات، والمكافأة بتنزل في محفظتك على طول.</span></p></div>
+    </div>
+  </section>
+
+  <section>
+    <h2><span lang-en>Specs</span><span lang-ar>المواصفات</span></h2>
+    <div class="card"><table>
+      <tr><td>Ticker</td><td><b>GROX</b></td></tr>
+      <tr><td><span lang-en>Proof of work</span><span lang-ar>التعدين</span></td><td>RandomX v2, Grox variant (CPU)</td></tr>
+      <tr><td><span lang-en>Block time</span><span lang-ar>وقت البلوك</span></td><td><span lang-en>1 minute</span><span lang-ar>دقيقة</span></td></tr>
+      <tr><td><span lang-en>Max supply</span><span lang-ar>أقصى عدد</span></td><td>21,000,000 GROX</td></tr>
+      <tr><td><span lang-en>Privacy</span><span lang-ar>الخصوصية</span></td><td><span lang-en>Stealth addresses, ring signatures, RingCT</span><span lang-ar>عناوين مخفية، توقيعات حلقية، مبالغ مخفية</span></td></tr>
+      <tr><td><span lang-en>Premine / dev fund</span><span lang-ar>للمطوّر</span></td><td><span lang-en>5% once (block 2) and 5% of each block, enforced by every node</span><span lang-ar>5% مرة واحدة (البلوك 2) و5% من كل بلوك، وكل الشبكة بتتأكد منهم</span></td></tr>
+    </table></div>
+  </section>
+
+  <section>
+    <h2><span lang-en>Transparent dev fund</span><span lang-ar>صندوق المطوّر مكشوف</span></h2>
+    <p class="lead" style="font-size:16px"><span lang-en>From block 12,000 the 5% goes to a dedicated dev fund wallet. Its view key is public: anyone can see every payment it receives, nobody can spend with it.</span><span lang-ar>من البلوك 12,000 الـ5% بتروح لمحفظة مخصوصة للمطوّر. مفتاح العرض بتاعها منشور: أي حد يقدر يشوف كل اللي بيدخلها، ومحدش يقدر يصرف منها بيه.</span></p>
+    <div class="card">
+      <div class="mono"><span style="color:var(--muted)">Address</span><br>GDGSHJXsxp8Y3EnLmGMnMcjLs5Qry6H5vibokRCFxKzNbZkggGkNYjd4iHwoMcJkuQKrsVN1Yt7mQY9s6AM5KVaZFLaUw5Y</div><br>
+      <div class="mono"><span style="color:var(--muted)">View key</span><br>bb0dd5b0061a6c00f23586a5f11c6b08dbd557369137240449d990c89fe59f02</div>
+    </div>
+  </section>
+
+  <section>
+    <h2><span lang-en>Official links (the only ones)</span><span lang-ar>اللينكات الرسمية (دي بس)</span></h2>
+    <ul class="links">
+      <li>GitHub: <a href="https://github.com/ahafarag/grox-coin">github.com/ahafarag/grox-coin</a></li>
+      <li><span lang-en>Explorer</span><span lang-ar>المستكشف</span>: <a href="https://d7vz9sqd109ta.cloudfront.net">d7vz9sqd109ta.cloudfront.net</a></li>
+      <li>Telegram: <a href="https://t.me/grox_coin">@grox_coin</a> · <a href="https://t.me/grox_community">@grox_community</a> · <a href="https://t.me/grox_coin_bot">@grox_coin_bot</a></li>
+      <li>Discord: <a href="https://discord.gg/V5PaU3SSY">discord.gg/V5PaU3SSY</a></li>
+    </ul>
+  </section>
+
+  <footer>
+    <span lang-en>Grox is a fair, community-driven coin, mined on everyday computers. Open source (BSD-3), built on Monero and RandomX. Nothing here is financial advice.</span>
+    <span lang-ar>Grox عملة عادلة بيعدّنها المجتمع من أجهزته العادية. مفتوحة المصدر، ومبنية على Monero و RandomX. مفيش هنا أي نصيحة مالية.</span>
+  </footer>
+</div>
+<script>
+  const KEY = 'grox.lang';
+  function set(l) { document.documentElement.lang = l; document.documentElement.dir = l === 'ar' ? 'rtl' : 'ltr';
+    document.getElementById('lang').textContent = l === 'ar' ? 'English' : 'عربي'; try { localStorage.setItem(KEY, l); } catch (e) {} }
+  let l = 'en'; try { l = localStorage.getItem(KEY) || ((navigator.language || '').startsWith('ar') ? 'ar' : 'en'); } catch (e) {}
+  set(l);
+  document.getElementById('lang').onclick = () => set(document.documentElement.lang === 'ar' ? 'en' : 'ar');
+</script>
+</body>
+</html>
