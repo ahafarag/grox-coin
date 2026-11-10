@@ -252,7 +252,7 @@ class Handler(BaseHTTPRequestHandler):
     def do_GET(self):
         from urllib.parse import urlparse, parse_qs
         u = urlparse(self.path)
-        ip = self.headers.get("CloudFront-Viewer-Address", self.client_address[0]).split(":")[0]
+        ip = self.headers.get("CloudFront-Viewer-Address", self.client_address[0]).rsplit(":", 1)[0]
         if not allowed(ip):
             return self._send(429, {"error": "slow down"})
         if u.path in ("/", "/index.html"):
