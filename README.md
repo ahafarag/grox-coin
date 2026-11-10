@@ -17,8 +17,6 @@
 | Addresses | start with `G` |
 | P2P port | 19880 |
 
-> Grox is a hobby coin for mining and fun. It has **no monetary value** and is **not an investment**. Nothing is sold.
-
 ---
 
 📖 **Full step-by-step guide:** [English](docs/GUIDE.md) · [العربية](docs/GUIDE.ar.md)
