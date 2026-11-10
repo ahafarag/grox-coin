@@ -206,6 +206,8 @@ curl -fsSL https://raw.githubusercontent.com/ahafarag/grox-coin/main/install.sh 
 
 ## ١٢. أسئلة شائعة
 
+**أسأل فين لو عندي مشكلة؟** على Discord: https://discord.gg/V5PaU3SSY (قناة #arabic أو #mining-help)، أو افتح issue على GitHub.
+
 **هل Grox ليها قيمة مالية؟** لأ. Grox عملة هواية للتعدين والتجربة، ملهاش قيمة مالية ومش استثمار، ومفيش أي بيع.
 
 **ليه المعالج بس؟** Grox بتستخدم RandomX v2، ودي مصممة للمعالجات العادية، والأجهزة المتخصصة متفيدش فيها. كل اللي عنده كمبيوتر ليه فرصة.

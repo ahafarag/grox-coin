@@ -197,6 +197,8 @@ Logs: node `~/.grox/grox.log`, wallet `~/grox-wallet-app-rpc.log`.
 
 ## 12. FAQ
 
+**Where can I ask for help?** On Discord: https://discord.gg/V5PaU3SSY (#mining-help), or open an issue on GitHub.
+
 **Is Grox worth money?** No. Grox is a hobby coin for mining and fun. It has no monetary
 value, is not an investment, and nothing is sold.
 

@@ -19,10 +19,13 @@
 | Addresses | start with `G` |
 | P2P port | 19880 |
 | Explorer | **https://d7vz9sqd109ta.cloudfront.net** |
+| Community | **Discord: https://discord.gg/V5PaU3SSY** |
 
 ---
 
 🔎 **Block explorer:** https://d7vz9sqd109ta.cloudfront.net
+
+💬 **Discord** (chat, help, first-block screenshots): https://discord.gg/V5PaU3SSY
 
 📖 **Full step-by-step guide:** [English](docs/GUIDE.md) · [العربية](docs/GUIDE.ar.md)
 
@@ -122,6 +125,7 @@ BSD-3-Clause, see [LICENSE](LICENSE).
 | للمطوّر | **5%** مرة واحدة في البلوك 2، و**5%** من كل بلوك، والقاعدتين في الكود وكل الشبكة بتتأكد منهم |
 | الخصوصية | تقنية Monero: محدش يقدر يشوف رصيد حد من عنوانه |
 | المستكشف | **https://d7vz9sqd109ta.cloudfront.net** |
+| المجتمع | **Discord: https://discord.gg/V5PaU3SSY** (فيه قناة عربي) |
 
 
 📖 **الدليل الكامل خطوة بخطوة:** [بالعربي](docs/GUIDE.ar.md)
