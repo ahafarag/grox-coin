@@ -109,20 +109,22 @@ namespace cryptonote
     return nettype != FAKECHAIN && hard_fork_version >= HF_VERSION_VIEW_TAGS;
   }
   //---------------------------------------------------------------
-  bool grox_get_dev_fund_address(network_type nettype, account_public_address &addr)
+  bool grox_get_dev_fund_address(network_type nettype, uint64_t height, account_public_address &addr)
   {
     static std::mutex mutex;
-    static bool cached[4] = {false, false, false, false};
-    static account_public_address cache[4];
+    static bool cached[4][2] = {};
+    static account_public_address cache[4][2];
     if (nettype > STAGENET)
       return false;
+    const int era = height >= grox_dev_fund_v2_height(nettype) ? 1 : 0;
     std::lock_guard<std::mutex> lock(mutex);
-    if (!cached[nettype])
+    if (!cached[nettype][era])
     {
+      const std::string &str = grox_dev_fund_address_string(nettype, height);
       address_parse_info info;
-      if (!get_account_address_from_str(info, nettype, grox_dev_fund_address_string(nettype)))
+      if (!get_account_address_from_str(info, nettype, str))
       {
-        MERROR("Grox dev fund address is not configured/valid for this network: " << grox_dev_fund_address_string(nettype));
+        MERROR("Grox dev fund address is not configured/valid for this network: " << str);
         return false;
       }
       if (info.is_subaddress)
@@ -130,10 +132,10 @@ namespace cryptonote
         MERROR("Grox dev fund address must be a standard address, not a subaddress");
         return false;
       }
-      cache[nettype] = info.address;
-      cached[nettype] = true;
+      cache[nettype][era] = info.address;
+      cached[nettype][era] = true;
     }
-    addr = cache[nettype];
+    addr = cache[nettype][era];
     return true;
   }
   //---------------------------------------------------------------
@@ -166,7 +168,7 @@ namespace cryptonote
                                    crypto::public_key &out_key, crypto::view_tag &view_tag, crypto::public_key &tx_pub_key)
   {
     account_public_address addr;
-    if (!grox_get_dev_fund_address(nettype, addr))
+    if (!grox_get_dev_fund_address(nettype, height, addr))
       return false;
     const keypair k = grox_get_dev_fund_tx_keypair(height);
     crypto::key_derivation derivation;

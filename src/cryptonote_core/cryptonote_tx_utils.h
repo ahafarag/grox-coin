@@ -49,9 +49,10 @@ namespace cryptonote
   // one-time tx key derived from the block height, so every node can verify
   // that it really pays the dev fund address, and the dev wallet finds it
   // through the matching additional tx public key in tx_extra.
-  const std::string &grox_dev_fund_address_string(network_type nettype); // grox_dev_fund_address.cpp
+  const std::string &grox_dev_fund_address_string(network_type nettype, uint64_t height); // grox_dev_fund_address.cpp
+  uint64_t grox_dev_fund_v2_height(network_type nettype);                                // grox_dev_fund_address.cpp
   bool grox_dev_fund_active(network_type nettype, uint8_t hard_fork_version);
-  bool grox_get_dev_fund_address(network_type nettype, account_public_address &addr);
+  bool grox_get_dev_fund_address(network_type nettype, uint64_t height, account_public_address &addr);
   uint64_t grox_get_premine_amount(network_type nettype, uint8_t hard_fork_version, uint64_t height);
   uint64_t grox_get_dev_fund_amount(network_type nettype, uint8_t hard_fork_version, uint64_t height, uint64_t base_reward);
   bool grox_derive_dev_fund_output(network_type nettype, uint64_t height, size_t output_index,

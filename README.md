@@ -27,6 +27,8 @@
 
 💬 **Community:** [Discord](https://discord.gg/V5PaU3SSY) · [Telegram group](https://t.me/grox_community) · [Telegram news channel](https://t.me/grox_coin)
 
+> ⬆️ **Network upgrade at block 12,000:** all nodes and miners must run **v1.2.0 or newer** before then. Older versions stop following the network at that block.
+
 📖 **Full step-by-step guide:** [English](docs/GUIDE.md) · [العربية](docs/GUIDE.ar.md)
 
 ## Windows: Grox Wallet app (easiest)
@@ -85,11 +87,26 @@ automatically through the public seed node.
 
 ## Premine & dev fund (transparency)
 
-- Block 2 pays **1,050,000 GROX (5%)** to the developer address.
-- Every block pays **5% of its reward** to the same address.
+- Block 2 paid the **1,050,000 GROX (5%)** premine to the developer.
+- Every block pays **5% of its reward** to the dev fund.
 - Both are consensus rules: every node rejects blocks that don't follow them, and anyone can see
   them in the explorer. Code: `src/cryptonote_core/grox_dev_fund_address.cpp`,
   `src/cryptonote_core/cryptonote_tx_utils.cpp`.
+
+**Dedicated dev fund wallet (from block 12,000, v1.2.0).** From block 12,000 the 5% goes to a
+dedicated dev fund wallet whose view key is public, so anyone can audit every payment it
+receives. A view key can only *see* incoming coins, never spend them.
+
+```
+Address:  GDGSHJXsxp8Y3EnLmGMnMcjLs5Qry6H5vibokRCFxKzNbZkggGkNYjd4iHwoMcJkuQKrsVN1Yt7mQY9s6AM5KVaZFLaUw5Y
+View key: bb0dd5b0061a6c00f23586a5f11c6b08dbd557369137240449d990c89fe59f02
+```
+
+```bash
+~/grox/bin/grox-wallet-cli --generate-from-view-key ~/grox-devfund-view
+# paste the address and the view key, choose any password, restore height 11990
+# then: refresh   and   show_transfers in
+```
 
 ## Build from source
 
