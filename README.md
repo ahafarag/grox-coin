@@ -108,6 +108,12 @@ automatically through the public seed node.
   them in the explorer. Code: `src/cryptonote_core/grox_dev_fund_address.cpp`,
   `src/cryptonote_core/cryptonote_tx_utils.cpp`.
 
+**Community reserve: 100,000 GROX, publicly visible.** 100,000 GROX from the premine were moved
+to the dedicated dev fund wallet below, reserved for community rewards: bounties (XMRig support,
+ARM builds, translations, tools) and contests. Transaction
+[`b755b187…99a97d`](https://d7vz9sqd109ta.cloudfront.net/#/tx/b755b1875bd6d587d03b4f8c8218c2ac06381e51e116eafb105e0e136c99a97d)
+(block 4,211). With the view key below, anyone can confirm the amount.
+
 **Dedicated dev fund wallet (from block 12,000, v1.2.0).** From block 12,000 the 5% goes to a
 dedicated dev fund wallet whose view key is public, so anyone can audit every payment it
 receives. A view key can only *see* incoming coins, never spend them.
@@ -119,7 +125,7 @@ View key: bb0dd5b0061a6c00f23586a5f11c6b08dbd557369137240449d990c89fe59f02
 
 ```bash
 ~/grox/bin/grox-wallet-cli --generate-from-view-key ~/grox-devfund-view
-# paste the address and the view key, choose any password, restore height 11990
+# paste the address and the view key, choose any password, restore height 4200
 # then: refresh   and   show_transfers in
 ```
 
