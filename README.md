@@ -1,3 +1,5 @@
+<p align="center"><img src="docs/images/grox-logo.png" alt="Grox logo" width="160"></p>
+
 # Grox (GROX)
 
 **A private coin you mine with your own computer. No mining rigs, no farms: one CPU, one fair chance.**

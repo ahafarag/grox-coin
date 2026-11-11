@@ -3,6 +3,8 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
+<link rel="icon" type="image/png" href="images/grox-logo.png">
+<meta property="og:image" content="https://ahafarag.github.io/grox-coin/images/grox-logo.png">
 <title>Grox (GROX) | Fair CPU mining</title>
 <meta name="description" content="Grox (GROX): a private coin you mine with your own computer. RandomX v2, 1-minute blocks, 21M max supply. Official page, hosted by GitHub.">
 <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -22,8 +24,7 @@
   .wrap { max-width: 1080px; margin: 0 auto; padding: 0 24px; }
   nav { display: flex; align-items: center; gap: 14px; padding: 22px 0; }
   .logo { display: flex; align-items: center; gap: 10px; font-weight: 700; letter-spacing: .18em; }
-  .mark { width: 34px; height: 34px; border-radius: 10px; display: grid; place-items: center; font-weight: 700;
-          background: linear-gradient(160deg, var(--gold-2), #e08a1e); color: var(--gold-ink); letter-spacing: 0; }
+  .mark { width: 34px; height: 34px; border-radius: 8px; flex: none; }
   .spacer { flex: 1; }
   .btn { display: inline-flex; align-items: center; gap: 8px; padding: 12px 18px; border-radius: 12px; border: 1px solid var(--line);
          background: var(--panel-2); color: var(--text); text-decoration: none; font-weight: 600; cursor: pointer; font: inherit; }
@@ -32,6 +33,7 @@
   .warn { border: 1px solid rgba(255,107,107,.45); background: rgba(255,107,107,.08); border-radius: 14px; padding: 14px 18px; margin: 6px 0 0; font-size: 15px; }
   .warn b { color: #ffb3b3; }
   .hero { padding: 64px 0 40px; }
+  .hero-logo { display: block; width: 112px; height: 112px; border-radius: 24px; margin-bottom: 22px; box-shadow: 0 12px 40px rgba(240,180,60,.18); }
   h1 { font-size: clamp(36px, 6vw, 64px); line-height: 1.08; margin: 0 0 18px; }
   h1 .hl { color: var(--gold); }
   .lead { color: var(--muted); font-size: 19px; max-width: 640px; margin: 0 0 28px; }
@@ -59,7 +61,7 @@
 <body>
 <div class="wrap">
   <nav>
-    <div class="logo"><div class="mark">G</div>GROX</div>
+    <div class="logo"><img class="mark" src="images/grox-logo.png" alt="Grox">GROX</div>
     <div class="spacer"></div>
     <a class="btn small" href="https://github.com/ahafarag/grox-coin">GitHub</a>
     <button class="btn small" id="lang">عربي</button>
@@ -71,6 +73,7 @@
   </div>
 
   <header class="hero">
+    <img class="hero-logo" src="images/grox-logo.png" alt="Grox logo" width="112" height="112">
     <h1><span lang-en>Mine <span class="hl">Grox</span><br>on your everyday computer</span><span lang-ar>عدّن <span class="hl">Grox</span><br>من جهازك العادي</span></h1>
     <p class="lead"><span lang-en>A private coin you mine with any CPU. No mining rigs, no farms: every computer gets a real chance to find blocks.</span><span lang-ar>عملة رقمية خاصة بتتعدّن بأي معالج. مفيش أجهزة تعدين ولا مزارع: كل كمبيوتر ليه فرصة حقيقية يلاقي بلوكات.</span></p>
     <div class="cta">
