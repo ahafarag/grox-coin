@@ -71,9 +71,23 @@
   .navbtns { display: flex; gap: 8px; margin-inline-start: auto; }
   .err { text-align: center; padding: 60px 20px; color: var(--muted); }
   .err b { display: block; font-size: 22px; color: var(--text); margin-bottom: 8px; }
+  .nav { display: flex; gap: 6px; }
+  .nav a { color: var(--muted); padding: 8px 12px; border-radius: 10px; font-weight: 600; font-size: 14px; }
+  .nav a:hover, .nav a.on { color: var(--text); background: var(--panel-2); text-decoration: none; }
+  .calc { display: grid; grid-template-columns: 1fr 1fr; gap: 20px; align-items: start; }
+  .field { display: flex; gap: 8px; margin: 8px 0 6px; }
+  .field input { flex: 1; background: var(--panel-2); border: 1px solid var(--line); border-radius: 12px; padding: 12px 14px; outline: none; font-family: var(--mono); font-size: 18px; direction: ltr; }
+  .field input:focus { border-color: var(--gold); }
+  .field select { background: var(--panel-2); border: 1px solid var(--line); border-radius: 12px; padding: 0 12px; color: var(--text); font: inherit; }
+  .big { font-size: 34px; font-weight: 700; color: var(--gold-2); margin: 4px 0 2px; }
+  .rank { color: var(--faint); font-family: var(--mono); }
+  .rank.top { color: var(--gold); font-weight: 700; }
+  .steps { margin: 6px 0 0; padding-inline-start: 20px; line-height: 1.9; color: var(--muted); font-size: 14px; }
+  .steps code, .note code { font-family: var(--mono); font-size: 13px; background: var(--panel-2); padding: 2px 6px; border-radius: 6px; color: var(--text); direction: ltr; unicode-bidi: isolate; }
   footer { max-width: 1180px; margin: 0 auto; padding: 10px 24px 40px; color: var(--faint); font-size: 13px; }
   @media (max-width: 820px) {
     .stats { grid-template-columns: 1fr 1fr; }
+    .calc { grid-template-columns: 1fr; }
     .kv { grid-template-columns: 1fr; }
     .kv > div.k { border-top: 1px solid var(--line); padding-bottom: 2px; }
     .kv > div.v { border-top: 0; padding-top: 0; }
@@ -86,6 +100,7 @@
 <header>
   <div class="bar">
     <a class="logo" href="#/"><div class="logo-mark" role="img" aria-label="Grox"></div>GROX <small>EXPLORER</small></a>
+    <nav class="nav"><a href="#/" id="navHome"></a><a href="#/calc" id="navCalc"></a><a href="#/leaderboard" id="navTop"></a></nav>
     <form class="search" id="searchForm">
       <input id="q" placeholder="Block height, block hash or transaction hash" autocomplete="off" spellcheck="false">
       <button class="btn primary" id="searchBtn">Search</button>
@@ -109,7 +124,18 @@ const T = {
         keyImages: 'Key images', outKeys: 'One-time output keys', notFound: 'Nothing found', notFoundSub: 'Check the height or hash and try again.',
         offline: 'Node unavailable', offlineSub: 'The explorer can\'t reach the Grox node right now.', mempoolTitle: 'Waiting for the next block',
         empty: 'Empty', ago: ' ago', sec: 's', min: 'min', hr: 'h', day: 'd', foot: 'Grox: fair CPU mining for everyone.',
-        premine: 'Includes the one-time 5% premine.', yes: 'yes' },
+        premine: 'Includes the one-time 5% premine.', yes: 'yes',
+        navHome: 'Blocks', navCalc: 'Calculator', navTop: 'Leaderboard', foundBy: 'Found by',
+        calcTitle: 'Mining calculator', calcYour: 'Your hashrate', calcHint: 'Use the number your Grox Wallet or XMRig shows.',
+        calcEvery: 'One block about every', calcPerDay: 'Blocks per day', calcGrox: 'GROX per day (95% to you)', calcShare: 'Share of the network',
+        calcLuck: 'Mining is luck: you may find a block much sooner or later than this. Difficulty adjusts every block, so the numbers move with the network.',
+        calcNet: 'Network now', topTitle: 'Blocks-found leaderboard', nick: 'Miner', blocks: 'Blocks', last24: 'Last 24 h', firstBlock: 'First block', lastBlockCol: 'Latest block',
+        topEmpty: 'No miners have joined yet. Be the first!', syncing: 'Scanning the chain for new members…',
+        joinTitle: 'Put your name on the board', join1: 'Open <a href="https://t.me/grox_coin_bot" target="_blank" rel="noopener">@grox_coin_bot</a> in a private chat (never in a group).',
+        join2: 'Send <code>/register nickname address viewkey</code>. The Grox Wallet app (v1.2.4+) makes this message for you: Receive → <i>Put your name on the leaderboard</i>. In grox-wallet-cli, <code>address</code> and <code>viewkey</code> show them.',
+        join3: 'The board then counts every block that paid your address. <code>/unregister</code> removes you.',
+        joinPrivacy: 'Your address and view key stay on the server and are never shown. Only your nickname is public. A view key can see the coins your address receives but can never spend them; for full privacy, mine to a separate wallet just for mining.',
+        registered: 'Members', unit: 'H/s' },
   ar: { search: 'بحث', ph: 'رقم البلوك أو هاش البلوك أو هاش التحويل', height: 'الارتفاع', hashrate: 'سرعة الشبكة', difficulty: 'الصعوبة',
         reward: 'مكافأة البلوك', lastBlock: 'آخر بلوك', mempool: 'في الانتظار', latest: 'آخر البلوكات', age: 'من', size: 'الحجم', txs: 'تحويلات',
         hash: 'الهاش', newer: '→ الأحدث', older: 'الأقدم ←', block: 'بلوك', tx: 'تحويل', time: 'الوقت', confirmations: 'التأكيدات',
@@ -120,7 +146,18 @@ const T = {
         keyImages: 'Key images', outKeys: 'مفاتيح المخرجات (لمرة واحدة)', notFound: 'مفيش نتيجة', notFoundSub: 'راجع الرقم أو الهاش وجرّب تاني.',
         offline: 'الشبكة مش متاحة', offlineSub: 'المستكشف مش قادر يوصل لعقدة Grox دلوقتي.', mempoolTitle: 'مستنية البلوك الجاي',
         empty: 'فاضية', ago: '', sec: ' ثانية', min: ' دقيقة', hr: ' ساعة', day: ' يوم', foot: 'Grox: تعدين عادل للجميع من أي كمبيوتر.',
-        premine: 'فيه الـ5% المبدئية (مرة واحدة).', yes: 'أيوه' },
+        premine: 'فيه الـ5% المبدئية (مرة واحدة).', yes: 'أيوه',
+        navHome: 'البلوكات', navCalc: 'الحاسبة', navTop: 'لوحة الأبطال', foundBy: 'لقاه',
+        calcTitle: 'حاسبة التعدين', calcYour: 'سرعة جهازك', calcHint: 'اكتب الرقم اللي بيظهر في محفظة Grox أو XMRig.',
+        calcEvery: 'بلوك تقريبًا كل', calcPerDay: 'بلوكات في اليوم', calcGrox: 'GROX في اليوم (95% ليك)', calcShare: 'نصيبك من الشبكة',
+        calcLuck: 'التعدين حظ: ممكن تلاقي بلوك أسرع أو أبطأ من كده بكتير. الصعوبة بتتغير كل بلوك، فالأرقام بتتحرك مع الشبكة.',
+        calcNet: 'الشبكة دلوقتي', topTitle: 'لوحة أبطال البلوكات', nick: 'المُعدِّن', blocks: 'البلوكات', last24: 'آخر 24 ساعة', firstBlock: 'أول بلوك', lastBlockCol: 'آخر بلوك',
+        topEmpty: 'لسه محدش انضم. خليك الأول!', syncing: 'بنفحص السلسلة للأعضاء الجداد…',
+        joinTitle: 'حط اسمك على اللوحة', join1: 'افتح <a href="https://t.me/grox_coin_bot" target="_blank" rel="noopener">@grox_coin_bot</a> في محادثة خاصة (مش في جروب).',
+        join2: 'ابعت <code>/register nickname address viewkey</code>. تطبيق محفظة Grox (من v1.2.4) بيجهّزلك الرسالة دي: استقبال ← <i>حط اسمك على لوحة أبطال البلوكات</i>. وفي grox-wallet-cli أوامر <code>address</code> و <code>viewkey</code> بتعرضهم.',
+        join3: 'اللوحة هتعد كل بلوك اتدفع لعنوانك. <code>/unregister</code> بيشيلك.',
+        joinPrivacy: 'العنوان ومفتاح المشاهدة بيفضلوا على السيرفر ومش بيظهروا خالص. اسمك المستعار بس هو اللي بيظهر. مفتاح المشاهدة بيشوف الفلوس اللي بتوصل لعنوانك بس عمره ما يقدر يصرفها؛ ولو عايز خصوصية كاملة، عدّن على محفظة منفصلة للتعدين بس.',
+        registered: 'الأعضاء', unit: 'H/s' },
 };
 let LANG = lsGet('grox.lang') || ((navigator.language || '').toLowerCase().startsWith('ar') ? 'ar' : 'en');
 const t = k => T[LANG][k];
@@ -149,6 +186,7 @@ function applyChrome() {
   $('q').placeholder = t('ph'); $('searchBtn').textContent = t('search');
   $('langBtn').textContent = LANG === 'ar' ? 'English' : 'عربي';
   $('foot').textContent = t('foot');
+  $('navHome').textContent = t('navHome'); $('navCalc').textContent = t('navCalc'); $('navTop').textContent = t('navTop');
 }
 $('langBtn').onclick = () => { LANG = LANG === 'ar' ? 'en' : 'ar'; lsSet('grox.lang', LANG); applyChrome(); route(); };
 
@@ -225,6 +263,7 @@ async function renderBlock(id) {
       <div class="k">${t('prev')}</div><div class="v hash">${b.height > 0 ? `<a href="#/block/${b.prev_hash}">${esc(b.prev_hash)}</a>` : '—'}</div>
     </div></div>
     <div class="card"><h2>${t('coinbase')}</h2><div class="kv">
+      ${b.found_by ? `<div class="k">${t('foundBy')}</div><div class="v"><a href="#/leaderboard"><b>${esc(b.found_by)}</b></a> ⛏</div>` : ''}
       <div class="k">${t('minerReward')}</div><div class="v"><span class="num">${fmt(cb.miner, 8)}</span> GROX</div>
       ${cb.dev_fund ? `<div class="k">${t('devFund')}</div><div class="v"><span class="num">${fmt(cb.dev_fund, 8)}</span> GROX ${b.height === 2 ? `<span class="tag blue">${t('premine')}</span>` : ''}</div>` : ''}
       <div class="k">${t('unlocks')}</div><div class="v num">${cb.unlock_height}</div>
@@ -257,14 +296,93 @@ async function renderTx(id) {
     <div class="card"><h2>${t('outKeys')}</h2>${x.output_keys.map(k => `<div class="hash" style="padding:6px 0;color:var(--muted)">${esc(k)}</div>`).join('')}</div>`;
 }
 
+/* ---------------- calculator ---------------- */
+let NET = null;
+function dur(sec) {
+  if (!isFinite(sec)) return '—';
+  const u = LANG === 'ar' ? [' ثانية', ' دقيقة', ' ساعة', ' يوم'] : [' s', ' min', ' h', ' days'];
+  return sec < 90 ? fmt(sec, 0) + u[0] : sec < 5400 ? fmt(sec / 60, 0) + u[1] : sec < 172800 ? fmt(sec / 3600, 1) + u[2] : fmt(sec / 86400, 1) + u[3];
+}
+function calcUpdate() {
+  if (!NET) return;
+  const v = parseFloat(($('hs').value || '').replace(',', '.')) * Number($('hsUnit').value);
+  const ok = v > 0 && isFinite(v);
+  const t1 = ok ? NET.difficulty / v : NaN, perDay = ok ? 86400 / t1 : 0;
+  $('cEvery').textContent = ok ? dur(t1) : '—';
+  $('cDay').textContent = ok ? fmt(perDay, perDay < 10 ? 2 : 1) : '—';
+  $('cGrox').textContent = ok ? fmt(perDay * NET.reward * 0.95, 2) : '—';
+  $('cShare').textContent = ok ? fmt(v / (NET.hashrate + v) * 100, 2) + '%' : '—';
+  lsSet('grox.hs', $('hs').value); lsSet('grox.hsUnit', $('hsUnit').value);
+}
+async function renderCalc() {
+  NET = await api('/api/info');
+  $('view').innerHTML = `
+    <div class="title"><h1>${t('calcTitle')}</h1></div>
+    <div class="calc">
+      <div class="card">
+        <h2>${t('calcYour')}</h2>
+        <div class="field"><input id="hs" inputmode="decimal" value="${esc(lsGet('grox.hs') || '500')}">
+          <select id="hsUnit"><option value="1">H/s</option><option value="1000">kH/s</option><option value="1000000">MH/s</option></select></div>
+        <div class="note">${t('calcHint')}</div>
+        <div style="margin-top:22px;color:var(--muted)">${t('calcEvery')}</div>
+        <div class="big num" id="cEvery">—</div>
+        <div class="kv" style="margin-top:14px">
+          <div class="k">${t('calcPerDay')}</div><div class="v num" id="cDay">—</div>
+          <div class="k">${t('calcGrox')}</div><div class="v num" id="cGrox">—</div>
+          <div class="k">${t('calcShare')}</div><div class="v num" id="cShare">—</div>
+        </div>
+      </div>
+      <div class="card">
+        <h2>${t('calcNet')}</h2>
+        <div class="kv">
+          <div class="k">${t('hashrate')}</div><div class="v num">${hr(NET.hashrate)}</div>
+          <div class="k">${t('difficulty')}</div><div class="v num">${fmt(NET.difficulty, 0)}</div>
+          <div class="k">${t('reward')}</div><div class="v"><span class="num">${fmt(NET.reward, 4)}</span> GROX</div>
+          <div class="k">${t('height')}</div><div class="v num">${NET.height.toLocaleString('en-US')}</div>
+        </div>
+        <div class="note">${t('calcLuck')}</div>
+      </div>
+    </div>`;
+  $('hsUnit').value = lsGet('grox.hsUnit') || '1';
+  $('hs').oninput = calcUpdate; $('hsUnit').onchange = calcUpdate;
+  calcUpdate();
+}
+
+/* ---------------- leaderboard ---------------- */
+async function renderTop() {
+  const b = await api('/api/leaderboard');
+  const rows = b.miners.map((m, i) => `<tr>
+      <td class="rank ${i < 3 && m.blocks ? 'top' : ''}">${i < 3 && m.blocks ? ['🥇', '🥈', '🥉'][i] : '#' + (i + 1)}</td>
+      <td><b>${esc(m.nick)}</b>${m.synced ? '' : ' <span class="tag grey">…</span>'}</td>
+      <td class="num e">${m.blocks.toLocaleString('en-US')}</td>
+      <td class="num e">${m.blocks_24h.toLocaleString('en-US')}</td>
+      <td class="num e hide-sm">${m.first_block != null ? `<a href="#/block/${m.first_block}">${m.first_block.toLocaleString('en-US')}</a>` : '—'}</td>
+      <td class="num e">${m.last_block != null ? `<a href="#/block/${m.last_block}">${m.last_block.toLocaleString('en-US')}</a>` : '—'}</td></tr>`).join('');
+  $('view').innerHTML = `
+    <div class="title"><h1>${t('topTitle')}</h1><span class="tag gold">${t('registered')}: <span class="num">${b.registered}</span></span>
+      ${b.syncing ? `<span class="tag grey">${t('syncing')}</span>` : ''}</div>
+    <div class="card">
+      ${b.miners.length ? `<div class="tbl"><table><thead><tr><th></th><th>${t('nick')}</th><th class="e">${t('blocks')}</th><th class="e">${t('last24')}</th><th class="e hide-sm">${t('firstBlock')}</th><th class="e">${t('lastBlockCol')}</th></tr></thead><tbody>${rows}</tbody></table></div>`
+        : `<div class="note">${t('topEmpty')}</div>`}
+    </div>
+    <div class="card"><h2>${t('joinTitle')}</h2>
+      <ol class="steps"><li>${t('join1')}</li><li>${t('join2')}</li><li>${t('join3')}</li></ol>
+      <div class="note">🔒 ${t('joinPrivacy')}</div>
+    </div>`;
+}
+
 /* ---------------- router ---------------- */
 async function route() {
   clearInterval(homeTimer);
   const parts = location.hash.replace(/^#\/?/, '').split('/');
+  for (const [id, r] of [['navHome', ''], ['navCalc', 'calc'], ['navTop', 'leaderboard']])
+    $(id).classList.toggle('on', (parts[0] === 'blocks' ? '' : parts[0]) === r || (r === '' && parts[0] === ''));
   try {
     if (parts[0] === 'block' && parts[1]) await renderBlock(parts[1]);
     else if (parts[0] === 'tx' && parts[1]) await renderTx(parts[1]);
     else if (parts[0] === 'blocks' && parts[1]) await renderHome(parts[1]);
+    else if (parts[0] === 'calc') await renderCalc();
+    else if (parts[0] === 'leaderboard') { await renderTop(); homeTimer = setInterval(() => renderTop().catch(() => {}), 30000); }
     else { await renderHome(); homeTimer = setInterval(() => renderHome().catch(() => {}), 10000); }
   } catch (err) { showError(err); }
   window.scrollTo(0, 0);

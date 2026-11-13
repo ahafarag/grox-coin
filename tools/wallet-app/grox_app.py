@@ -438,6 +438,17 @@ def api_restore(body):
     return {"address": r.get("address"), "name": name}
 
 
+def api_viewkey(_body):
+    """Address + private view key, only for the opt-in blocks-found leaderboard sign-up.
+    A view key can see incoming coins but can never spend them."""
+    if not STATE["wallet_file"]:
+        raise RpcError("افتح المحفظة الأول")
+    with LOCK:
+        key = wallet("query_key", {"key_type": "view_key"})["key"]
+        addr = wallet("get_address", {"account_index": 0})["address"]
+    return {"address": addr, "view_key": key}
+
+
 def api_lock(_body):
     with LOCK:
         if wallet_rpc_up():
@@ -647,6 +658,7 @@ ROUTES = {
     ("POST", "/api/create"): api_create,
     ("POST", "/api/restore"): api_restore,
     ("POST", "/api/lock"): api_lock,
+    ("POST", "/api/viewkey"): api_viewkey,
     ("POST", "/api/mining"): api_mining,
     ("POST", "/api/send"): api_send,
     ("POST", "/api/node/start"): api_node_start,

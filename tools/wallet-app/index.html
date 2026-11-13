@@ -380,6 +380,7 @@
       <h2><span data-en="Receive">استقبال</span></h2>
       <div class="sub" style="margin-top:0"><span data-en="Share this address to receive GROX. The address is safe to share; your 25 words never are.">ابعت العنوان ده لأي حد عايز يحوّلك GROX. العنوان آمن تشاركه، إنما الـ25 كلمة لأ.</span></div>
       <div class="addr-row"><div class="addr" id="addr2">—</div><button class="btn" id="copyBtn2"><span data-en="Copy">نسخ</span></button></div>
+      <div style="margin-top:14px"><button class="linkbtn" data-open="board">🏆 <span data-en="Put your name on the blocks-found leaderboard">حط اسمك على لوحة أبطال البلوكات</span></button></div>
     </section>
 
     <section class="card span2">
@@ -433,6 +434,26 @@
         <button class="btn primary" id="seedDone" disabled><span data-en="Done, continue">تمام، كمّل</span></button>
       </div>
     </div>
+  </div>
+</div>
+
+<div class="modal-bg hidden" id="mBoard">
+  <div class="modal">
+    <h2><span data-en="Join the leaderboard">انضم للوحة الأبطال</span></h2>
+    <p class="hint"><span data-en="The Grox explorer shows how many blocks each member found. Pick a nickname, then send the message below to @grox_coin_bot in a private Telegram chat.">مستكشف Grox بيعرض كل عضو لقى كام بلوك. اختار اسم مستعار، وبعدين ابعت الرسالة اللي تحت لـ @grox_coin_bot في محادثة خاصة على تليجرام.</span></p>
+    <label for="bNick"><span data-en="Nickname (2–20 letters or digits)">اسمك المستعار (من 2 لـ 20 حرف أو رقم)</span></label>
+    <input type="text" class="ltr" id="bNick" maxlength="20" autocomplete="off" spellcheck="false">
+    <div class="modal-actions"><button class="btn primary" id="bMake"><span data-en="Make my sign-up message">جهّز رسالة الاشتراك</span></button></div>
+    <div class="hidden" id="bOut" style="margin-top:16px">
+      <textarea id="bText" class="ltr" readonly rows="4" style="width:100%;font-family:var(--mono);font-size:12px"></textarea>
+      <div class="modal-actions">
+        <button class="btn" id="bCopy"><span data-en="Copy">نسخ</span></button>
+        <a class="btn primary" href="https://t.me/grox_coin_bot" target="_blank" rel="noopener"><span data-en="Open @grox_coin_bot">افتح @grox_coin_bot</span></a>
+      </div>
+      <div class="warn" style="margin-top:14px">🔒 <span data-en="This message contains your view key. Send it only to @grox_coin_bot in a private chat. A view key can see the coins you receive but can never spend them. Only your nickname is shown publicly. Never send your 25 words to anyone.">الرسالة دي فيها مفتاح المشاهدة بتاعك. ابعتها لـ @grox_coin_bot بس في محادثة خاصة. مفتاح المشاهدة بيشوف الفلوس اللي بتوصلك بس عمره ما يقدر يصرفها. اسمك المستعار بس هو اللي بيظهر للناس. الـ25 كلمة متتبعتش لأي حد.</span></div>
+    </div>
+    <div class="msg" id="bMsg"></div>
+    <div class="modal-actions"><button class="btn ghost" data-close><span data-en="Close">إغلاق</span></button></div>
   </div>
 </div>
 
@@ -522,13 +543,14 @@ function setMsg(id, text, kind) { const m = $(id); m.className = 'msg' + (kind ?
 /* ---------------- screens & modals ---------------- */
 function showDash() { $('landing').classList.add('hidden'); $('dash').classList.remove('hidden'); window.scrollTo(0, 0); }
 function showLanding() { $('dash').classList.add('hidden'); $('landing').classList.remove('hidden'); }
-const modals = { create: 'mCreate', open: 'mOpen', restore: 'mRestore' };
+const modals = { create: 'mCreate', open: 'mOpen', restore: 'mRestore', board: 'mBoard' };
 function closeModals() { Object.values(modals).forEach(id => $(id).classList.add('hidden')); }
 function openModal(which) {
   closeModals();
   if (which === 'open' && wallets.length === 0) which = 'create';
   if (which === 'create') { $('createStep1').classList.remove('hidden'); $('createStep2').classList.add('hidden'); setMsg('cMsg'); }
   if (which === 'open') { fillWallets(); setMsg('oMsg'); }
+  if (which === 'board') { $('bOut').classList.add('hidden'); $('bText').value = ''; setMsg('bMsg'); }
   $(modals[which]).classList.remove('hidden');
   const first = $(modals[which]).querySelector('input, textarea, select'); if (first) setTimeout(() => first.focus(), 50);
 }
@@ -628,6 +650,16 @@ $('mineBtn').onclick = async () => {
 function copy(t) { navigator.clipboard.writeText(t).then(() => toast(L('اتنسخ العنوان', 'Address copied')), () => toast(L('النسخ منفعش', 'Copy failed'))); }
 $('copyBtn').onclick = () => state && state.wallet && copy(state.wallet.address);
 $('copyBtn2').onclick = $('copyBtn').onclick;
+$('bMake').onclick = async () => {
+  const nick = $('bNick').value.trim();
+  if (!/^[A-Za-z0-9_.-]{2,20}$/.test(nick)) return setMsg('bMsg', L('الاسم: من 2 لـ 20 حرف إنجليزي أو رقم أو _ - .', 'Nickname: 2–20 letters, digits, _ - .'), 'err');
+  try {
+    const r = await api('/api/viewkey', {});
+    $('bText').value = `/register ${nick} ${r.address} ${r.view_key}`;
+    $('bOut').classList.remove('hidden'); setMsg('bMsg');
+  } catch (e) { setMsg('bMsg', e.message, 'err'); }
+};
+$('bCopy').onclick = () => navigator.clipboard.writeText($('bText').value).then(() => toast(L('اتنسخت الرسالة', 'Message copied')), () => toast(L('النسخ منفعش', 'Copy failed')));
 $('maxBtn').onclick = () => { if (state && state.wallet) $('sAmt').value = Math.max(0, state.wallet.unlocked - 0.01).toFixed(8); };
 $('sendBtn').onclick = async () => {
   const addr = $('sAddr').value.trim(), amt = $('sAmt').value.trim();

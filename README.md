@@ -111,11 +111,24 @@ xmrig --daemon -o 127.0.0.1:19881 -a rx/grox --coin GROX -u <your G... address>
 XMRig mines solo against your own node: every block you find pays your address directly.
 Fastest with ~2.5 GB free RAM and huge pages. Antivirus programs often flag any miner, including XMRig.
 
+## Mining calculator & blocks-found leaderboard
+
+- **Calculator:** the [explorer](https://d7vz9sqd109ta.cloudfront.net/#/calc) shows how often your
+  hashrate finds a block at today's difficulty (also `/calc 500` in the Telegram bot).
+- **Leaderboard (optional):** the [explorer](https://d7vz9sqd109ta.cloudfront.net/#/leaderboard) ranks
+  miners by blocks found. Grox payments are private, so it only counts miners who join: send
+  `/register nickname address viewkey` to [@grox_coin_bot](https://t.me/grox_coin_bot) in a private chat.
+  The Grox Wallet app writes this message for you (Receive → *Put your name on the blocks-found leaderboard*).
+  Only your nickname is shown. The view key stays on the Grox server; it can see the coins your address
+  receives but can never spend them. For full privacy, mine to a wallet used only for mining.
+  `/unregister` removes you, and your first block after joining is announced in [@grox_coin](https://t.me/grox_coin).
+
 ## Safety
 
 - **Your 25 words are your wallet.** Anyone who sees them can take your coins. Never photograph,
   paste or send them, not even to us.
-- Everything runs **on your computer**. No server ever sees your keys.
+- Everything runs **on your computer**. No server ever sees your keys. (Only if you join the optional
+  leaderboard does the Grox server get your *view* key, which can never spend coins.)
 - Balances are private: nobody can look up a balance from an address. Your **IP address** is
   visible to the nodes you connect to, like any peer-to-peer network.
 - Some antivirus programs flag *any* crypto miner. Grox mines only when you press Start.
@@ -242,10 +255,18 @@ Grox بتشتغل مع **XMRig** (الخوارزمية `rx/grox`)، وده غا�
 1. خلّي برنامج Grox Wallet شغّال ومتزامن، و**وقّف التعدين جوّاه**.
 2. حط عنوانك (بيبدأ بـ G) في ملف `start-grox-mining.cmd` وشغّله. أي بلوك تلاقيه بيتدفع لعنوانك على طول.
 
+### حاسبة التعدين ولوحة أبطال البلوكات
+
+- **الحاسبة:** [المستكشف](https://d7vz9sqd109ta.cloudfront.net/#/calc) بيقولك سرعتك بتلاقي بلوك كل قد إيه بالصعوبة الحالية.
+- **لوحة الأبطال (اختياري):** [المستكشف](https://d7vz9sqd109ta.cloudfront.net/#/leaderboard) بيرتّب المُعدِّنين بعدد البلوكات.
+  ابعت `/register nickname address viewkey` لـ [@grox_coin_bot](https://t.me/grox_coin_bot) في محادثة خاصة،
+  أو خلّي برنامج Grox Wallet يجهّزهالك (استقبال ← *حط اسمك على لوحة أبطال البلوكات*). اسمك المستعار بس هو اللي بيظهر،
+  ومفتاح المشاهدة بيشوف الفلوس اللي بتوصلك بس عمره ما يقدر يصرفها.
+
 ### الأمان
 
 - **الـ25 كلمة هي محفظتك.** أي حد يشوفهم ياخد فلوسك. متصوّرهمش ومتبعتهمش لحد، ولا حتى لينا.
-- كل حاجة بتشتغل **على جهازك إنت**، ومفيش سيرفر بيشوف مفاتيحك.
+- كل حاجة بتشتغل **على جهازك إنت**، ومفيش سيرفر بيشوف مفاتيحك (إلا لو انضميت للوحة الأبطال، ساعتها سيرفر Grox بياخد مفتاح *المشاهدة* بس، وده عمره ما يصرف فلوس).
 - بعض برامج مكافحة الفيروسات بتعترض على أي برنامج تعدين. Grox مبيعدّنش غير لما تدوس ابدأ.
 
 </div>

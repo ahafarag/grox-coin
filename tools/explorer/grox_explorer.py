@@ -13,12 +13,14 @@ import os
 import re
 import threading
 import time
+import sys
 import urllib.request
 from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
 
 ATOMIC = 10 ** 11
 HERE = os.path.dirname(os.path.abspath(__file__))
 DAEMON = "http://127.0.0.1:19881"
+BOARD = None            # opt-in blocks-found leaderboard (see grox_leaderboard.py)
 HEX64 = re.compile(r"^[0-9a-fA-F]{64}$")
 
 
@@ -158,6 +160,7 @@ def api_block(q):
     blk = cached(f"block:{ident}", 30, f)
     blk = dict(blk)
     blk["confirmations"] = api_info(q)["height"] - blk["height"]
+    blk["found_by"] = BOARD.found_by(blk["height"]) if BOARD else None
     return blk
 
 
@@ -213,8 +216,20 @@ def api_search(q):
     raise NotFound("nothing found")
 
 
+def api_leaderboard(_q):
+    if not BOARD:
+        return {"miners": [], "registered": 0, "scanned_height": 0, "syncing": False, "enabled": False}
+    return dict(cached("leaderboard", 10, BOARD.table), enabled=True)
+
+
+def api_events(q):
+    since = int(q.get("since", ["0"])[0])
+    return {"events": BOARD.events(since) if BOARD else []}
+
+
 ROUTES = {"/api/info": api_info, "/api/blocks": api_blocks, "/api/block": api_block,
-          "/api/tx": api_tx, "/api/mempool": api_mempool, "/api/search": api_search}
+          "/api/tx": api_tx, "/api/mempool": api_mempool, "/api/search": api_search,
+          "/api/leaderboard": api_leaderboard, "/api/events": api_events}
 
 # simple per-IP rate limit (requests per 10 s)
 _hits = {}
@@ -272,14 +287,22 @@ class Handler(BaseHTTPRequestHandler):
 
 
 def main():
-    global DAEMON
+    global DAEMON, BOARD
     ap = argparse.ArgumentParser(description="Grox block explorer")
     ap.add_argument("--port", type=int, default=8792)
     ap.add_argument("--public", action="store_true", help="listen on 0.0.0.0 instead of 127.0.0.1")
     ap.add_argument("--daemon", default=None, help="groxd RPC URL (default http://127.0.0.1:19881)")
     ap.add_argument("--testnet", action="store_true")
+    ap.add_argument("--leaderboard-dir", default=None,
+                    help="folder with miners.json from the Telegram bot; turns on the blocks-found leaderboard")
     a = ap.parse_args()
     DAEMON = a.daemon or ("http://127.0.0.1:29881" if a.testnet else "http://127.0.0.1:19881")
+    if a.leaderboard_dir:
+        sys.path.insert(0, HERE)
+        from grox_leaderboard import Leaderboard
+        BOARD = Leaderboard(a.leaderboard_dir, rpc, testnet=a.testnet)
+        BOARD.start()
+        print(f"Leaderboard on (registrations in {a.leaderboard_dir}/miners.json)")
     host = "0.0.0.0" if a.public else "127.0.0.1"
     try:
         srv = ThreadingHTTPServer((host, a.port), Handler)
