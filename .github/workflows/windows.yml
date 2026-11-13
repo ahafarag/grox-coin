@@ -55,7 +55,7 @@ jobs:
         run: |
           cmake -S . -B build/win \
             -DCMAKE_TOOLCHAIN_FILE="$PWD/contrib/depends/x86_64-w64-mingw32/share/toolchain.cmake" \
-            -DCMAKE_BUILD_TYPE=Release -DBUILD_TESTS=OFF -DUSE_DEVICE_TREZOR=OFF \
+            -DCMAKE_BUILD_TYPE=Release -DARCH=x86-64 -DBUILD_TESTS=OFF -DUSE_DEVICE_TREZOR=OFF \
             -DMANUAL_SUBMODULES=1 -DBUILD_TAG=win-x64
           make -C build/win -j"$(nproc)" daemon simplewallet wallet_rpc_server
           x86_64-w64-mingw32-strip build/win/bin/*.exe

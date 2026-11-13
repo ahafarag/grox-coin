@@ -40,7 +40,7 @@ jobs:
       - name: Build
         run: |
           mkdir -p build && cd build
-          cmake .. -DCMAKE_BUILD_TYPE=Release -DBUILD_TESTS=OFF -DUSE_DEVICE_TREZOR=OFF -DMANUAL_SUBMODULES=1
+          cmake .. -DCMAKE_BUILD_TYPE=Release -DARCH=x86-64 -DBUILD_TESTS=OFF -DUSE_DEVICE_TREZOR=OFF -DMANUAL_SUBMODULES=1
           make -j"$(nproc)" daemon simplewallet wallet_rpc_server
 
       - name: Package
