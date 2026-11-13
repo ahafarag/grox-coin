@@ -1,0 +1,103 @@
+name: xmrig
+
+# Builds XMRig with Grox support (rx/grox) in public: the official XMRig v6.26.0 source
+# plus tools/xmrig/grox-xmrig-6.26.0.patch. Called by release.yml; can also run by hand.
+on:
+  workflow_call:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+env:
+  XMRIG_TAG: v6.26.0
+  PKG: xmrig-grox-6.26.0
+
+jobs:
+  linux:
+    runs-on: ubuntu-22.04
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Install build tools
+        run: |
+          sudo apt-get update
+          sudo DEBIAN_FRONTEND=noninteractive apt-get install -y build-essential cmake automake libtool autoconf wget
+
+      - name: Get XMRig and apply the Grox patch
+        run: |
+          git clone --depth 1 --branch "$XMRIG_TAG" https://github.com/xmrig/xmrig.git xmrig
+          cd xmrig && git apply ../tools/xmrig/grox-xmrig-6.26.0.patch
+
+      - name: Build static dependencies
+        run: cd xmrig/scripts && ./build_deps.sh
+
+      - name: Build
+        run: |
+          mkdir -p xmrig/build && cd xmrig/build
+          cmake .. -DCMAKE_BUILD_TYPE=Release -DXMRIG_DEPS=scripts/deps -DBUILD_STATIC=ON \
+            -DWITH_OPENCL=OFF -DWITH_CUDA=OFF
+          make -j"$(nproc)"
+          ./xmrig --version
+
+      - name: Package
+        run: |
+          D="$PKG-linux-x64"
+          mkdir -p "dist/$D"
+          cp xmrig/build/xmrig tools/xmrig/start-grox-mining.sh tools/xmrig/README.txt "dist/$D/"
+          cp xmrig/LICENSE "dist/$D/LICENSE"
+          chmod +x "dist/$D/xmrig" "dist/$D/start-grox-mining.sh"
+          cd dist && tar -czf "$D.tar.gz" "$D" && sha256sum "$D.tar.gz" > "$D.tar.gz.sha256"
+          rm -rf "$D"
+
+      - uses: actions/upload-artifact@v4
+        with:
+          name: grox-xmrig-linux
+          path: dist/*
+
+  windows:
+    runs-on: windows-latest
+    defaults:
+      run:
+        shell: msys2 {0}
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: msys2/setup-msys2@v2
+        with:
+          msystem: MINGW64
+          update: true
+          install: >-
+            git make zip
+            mingw-w64-x86_64-gcc
+            mingw-w64-x86_64-cmake
+
+      - name: Get XMRig, deps and apply the Grox patch
+        run: |
+          git clone --depth 1 --branch "$XMRIG_TAG" https://github.com/xmrig/xmrig.git xmrig
+          git clone --depth 1 https://github.com/xmrig/xmrig-deps.git xmrig-deps
+          cd xmrig && git apply ../tools/xmrig/grox-xmrig-6.26.0.patch
+
+      - name: Build
+        run: |
+          mkdir -p xmrig/build && cd xmrig/build
+          cmake .. -G "MSYS Makefiles" -DCMAKE_BUILD_TYPE=Release -DXMRIG_DEPS="$(cd ../../xmrig-deps/gcc/x64 && pwd)" \
+            -DWITH_OPENCL=OFF -DWITH_CUDA=OFF
+          make -j"$(nproc)"
+          ./xmrig.exe --version
+
+      - name: Package
+        run: |
+          D="$PKG-win-x64"
+          mkdir -p "dist/$D"
+          cp xmrig/build/xmrig.exe "dist/$D/"
+          sed 's/$/\r/' tools/xmrig/start-grox-mining.cmd > "dist/$D/start-grox-mining.cmd"
+          sed 's/$/\r/' tools/xmrig/README.txt > "dist/$D/README.txt"
+          cp xmrig/LICENSE "dist/$D/LICENSE.txt"
+          cd dist && zip -r -q "$D.zip" "$D" && sha256sum "$D.zip" > "$D.zip.sha256"
+          rm -rf "$D"
+
+      - uses: actions/upload-artifact@v4
+        with:
+          name: grox-xmrig-windows
+          path: dist/*

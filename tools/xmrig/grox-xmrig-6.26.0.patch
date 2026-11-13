@@ -1,0 +1,365 @@
+diff --git a/src/base/crypto/Algorithm.cpp b/src/base/crypto/Algorithm.cpp
+index 433697ad..9e7661ec 100644
+--- a/src/base/crypto/Algorithm.cpp
++++ b/src/base/crypto/Algorithm.cpp
+@@ -83,6 +83,7 @@ const char *Algorithm::kRX_ARQ          = "rx/arq";
+ const char *Algorithm::kRX_GRAFT        = "rx/graft";
+ const char *Algorithm::kRX_SFX          = "rx/sfx";
+ const char *Algorithm::kRX_YADA         = "rx/yada";
++const char *Algorithm::kRX_GROX         = "rx/grox";
+ #endif
+ 
+ #ifdef XMRIG_ALGO_ARGON2
+@@ -150,6 +151,7 @@ static const std::map<uint32_t, const char *> kAlgorithmNames = {
+     ALGO_NAME(RX_GRAFT),
+     ALGO_NAME(RX_SFX),
+     ALGO_NAME(RX_YADA),
++    ALGO_NAME(RX_GROX),
+ #   endif
+ 
+ #   ifdef XMRIG_ALGO_ARGON2
+@@ -267,6 +269,8 @@ static const std::map<const char *, Algorithm::Id, aliasCompare> kAlgorithmAlias
+                                     ALGO_ALIAS(RX_SFX,          "randomsfx"),
+     ALGO_ALIAS_AUTO(RX_YADA),       ALGO_ALIAS(RX_YADA,         "randomx/yada"),
+                                     ALGO_ALIAS(RX_YADA,         "randomyada"),
++    ALGO_ALIAS_AUTO(RX_GROX),       ALGO_ALIAS(RX_GROX,         "randomx/grox"),
++                                    ALGO_ALIAS(RX_GROX,         "grox"),
+ #   endif
+ 
+ #   ifdef XMRIG_ALGO_ARGON2
+@@ -354,7 +358,7 @@ std::vector<xmrig::Algorithm> xmrig::Algorithm::all(const std::function<bool(con
+         CN_HEAVY_0, CN_HEAVY_TUBE, CN_HEAVY_XHV,
+         CN_PICO_0, CN_PICO_TLO,
+         CN_UPX2,
+-        RX_0, RX_V2, RX_WOW, RX_ARQ, RX_GRAFT, RX_SFX, RX_YADA,
++        RX_0, RX_V2, RX_WOW, RX_ARQ, RX_GRAFT, RX_SFX, RX_YADA, RX_GROX,
+         AR2_CHUKWA, AR2_CHUKWA_V2, AR2_WRKZ,
+         KAWPOW_RVN,
+         GHOSTRIDER_RTM
+diff --git a/src/base/crypto/Algorithm.h b/src/base/crypto/Algorithm.h
+index 1dc80526..4f48b961 100644
+--- a/src/base/crypto/Algorithm.h
++++ b/src/base/crypto/Algorithm.h
+@@ -79,6 +79,7 @@ public:
+         RX_GRAFT        = 0x72151267,   // "rx/graft"         RandomGRAFT (Graft).
+         RX_SFX          = 0x72151273,   // "rx/sfx"           RandomSFX (Safex Cash).
+         RX_YADA         = 0x72151279,   // "rx/yada"          RandomYada (YadaCoin).
++        RX_GROX         = 0x72151247,   // "rx/grox"          RandomX v2 program, Grox salt, no commitment (Grox).
+         AR2_CHUKWA      = 0x61130000,   // "argon2/chukwa"    Argon2id (Chukwa).
+         AR2_CHUKWA_V2   = 0x61140000,   // "argon2/chukwav2"  Argon2id (Chukwa v2).
+         AR2_WRKZ        = 0x61120000,   // "argon2/wrkz"      Argon2id (WRKZ)
+@@ -146,6 +147,7 @@ public:
+     static const char *kRX_GRAFT;
+     static const char *kRX_SFX;
+     static const char *kRX_YADA;
++    static const char *kRX_GROX;
+ #   endif
+ 
+ #   ifdef XMRIG_ALGO_ARGON2
+diff --git a/src/base/crypto/Coin.cpp b/src/base/crypto/Coin.cpp
+index 85cc605a..ff8f7663 100644
+--- a/src/base/crypto/Coin.cpp
++++ b/src/base/crypto/Coin.cpp
+@@ -55,6 +55,7 @@ static const CoinInfo coinInfo[] = {
+     { Algorithm::RX_0,            "ZEPH",     "Zephyr",       120,    1000000000000,  BLUE_BG_BOLD(   WHITE_BOLD_S " zephyr  ") },
+     { Algorithm::RX_0,            "Townforge","Townforge",    30,     100000000,      MAGENTA_BG_BOLD(WHITE_BOLD_S " townforge ") },
+     { Algorithm::RX_YADA,         "YDA",      "YadaCoin",     120,    100000000,      BLUE_BG_BOLD(   WHITE_BOLD_S " yada    ") },
++    { Algorithm::RX_GROX,         "GROX",     "Grox",         60,     100000000000,   YELLOW_BG_BOLD( WHITE_BOLD_S " grox    ") },
+ };
+ 
+ 
+diff --git a/src/base/crypto/Coin.h b/src/base/crypto/Coin.h
+index c3c97fda..f3fb91f8 100644
+--- a/src/base/crypto/Coin.h
++++ b/src/base/crypto/Coin.h
+@@ -41,6 +41,7 @@ public:
+         ZEPHYR,
+         TOWNFORGE,
+         YADA,
++        GROX,
+         MAX
+     };
+ 
+diff --git a/src/base/net/stratum/DaemonClient.cpp b/src/base/net/stratum/DaemonClient.cpp
+index f8e2bd6d..599cd02c 100644
+--- a/src/base/net/stratum/DaemonClient.cpp
++++ b/src/base/net/stratum/DaemonClient.cpp
+@@ -241,6 +241,10 @@ void xmrig::DaemonClient::setPool(const Pool &pool)
+     if (!m_coin.isValid() && pool.algorithm() == Algorithm::RX_WOW) {
+         m_coin = Coin::WOWNERO;
+     }
++
++    if (!m_coin.isValid() && pool.algorithm() == Algorithm::RX_GROX) {
++        m_coin = Coin::GROX;
++    }
+ }
+ 
+ 
+diff --git a/src/base/tools/cryptonote/BlockTemplate.cpp b/src/base/tools/cryptonote/BlockTemplate.cpp
+index 54933365..b3ff05da 100644
+--- a/src/base/tools/cryptonote/BlockTemplate.cpp
++++ b/src/base/tools/cryptonote/BlockTemplate.cpp
+@@ -263,6 +263,12 @@ bool xmrig::BlockTemplate::parse(bool hashes)
+             return false;
+         }
+     }
++    else if (m_coin == Coin::GROX) {
++        // Grox: miner output + consensus dev fund output
++        if (m_numOutputs < 1) {
++            return false;
++        }
++    }
+     else if (m_numOutputs != 1) {
+         return false;
+     }
+@@ -323,6 +329,27 @@ bool xmrig::BlockTemplate::parse(bool hashes)
+         ar(m_viewTag);
+     }
+ 
++    if (m_coin == Coin::GROX) {
++        for (uint64_t k = 1; k < m_numOutputs; ++k) {
++            uint64_t amount2;
++            ar(amount2);
++
++            uint8_t output_type2;
++            ar(output_type2);
++            if ((output_type2 != 2) && (output_type2 != 3)) {
++                return false;
++            }
++
++            Span key2;
++            ar(key2, kKeySize);
++
++            if (output_type2 == 3) {
++                uint8_t view_tag2;
++                ar(view_tag2);
++            }
++        }
++    }
++
+     if (m_coin == Coin::TOWNFORGE) {
+       ar(m_unlockTime);
+     }
+@@ -363,6 +390,11 @@ bool xmrig::BlockTemplate::parse(bool hashes)
+             ar_extra(m_txMergeMiningTag, size);
+             break;
+ 
++        case 0x04: // TX_EXTRA_TAG_ADDITIONAL_PUBKEYS (Grox: per-output keys for the dev fund output)
++            ar_extra(size);
++            ar_extra.skip(size * kKeySize);
++            break;
++
+         default:
+             return false; // TODO(SChernykh): handle other tags
+         }
+diff --git a/src/crypto/randomx/asm/program_read_dataset_sshash_init_v2.inc b/src/crypto/randomx/asm/program_read_dataset_sshash_init_v2.inc
+new file mode 100644
+index 00000000..7a04895b
+--- /dev/null
++++ b/src/crypto/randomx/asm/program_read_dataset_sshash_init_v2.inc
+@@ -0,0 +1,17 @@
++	sub rsp, 200
++	mov qword ptr [rsp+64], rbx
++	mov qword ptr [rsp+56], r8
++	mov qword ptr [rsp+48], r9
++	mov qword ptr [rsp+40], r10
++	mov qword ptr [rsp+32], r11
++	mov qword ptr [rsp+24], r12
++	mov qword ptr [rsp+16], r13
++	mov qword ptr [rsp+8], r14
++	mov qword ptr [rsp+0], r15
++	mov ebx, ebp                       ;# ebx = ma (RandomX v2: read the item before "ma" is modified)
++	shr ebx, 6
++	and ebx, RANDOMX_DATASET_BASE_MASK / 64 ;# ebx = Dataset block number
++	xor rbp, rax                       ;# modify "ma"
++	ror rbp, 32                        ;# swap "ma" and "mx"
++	;# add ebx, datasetOffset / 64
++	;# call 32768
+\ No newline at end of file
+diff --git a/src/crypto/randomx/jit_compiler_x86.cpp b/src/crypto/randomx/jit_compiler_x86.cpp
+index 45cd4fac..776b6636 100644
+--- a/src/crypto/randomx/jit_compiler_x86.cpp
++++ b/src/crypto/randomx/jit_compiler_x86.cpp
+@@ -119,6 +119,7 @@ namespace randomx {
+ 	#define codeReadDataset ADDR(randomx_program_read_dataset)
+ 	#define codeReadDatasetV2 ADDR(randomx_program_read_dataset_v2)
+ 	#define codeReadDatasetLightSshInit ADDR(randomx_program_read_dataset_sshash_init)
++	#define codeReadDatasetLightSshInitV2 ADDR(randomx_program_read_dataset_sshash_init_v2)
+ 	#define codeReadDatasetLightSshFin ADDR(randomx_program_read_dataset_sshash_fin)
+ 	#define codeDatasetInit ADDR(randomx_dataset_init)
+ 	#define codeDatasetInitAVX2Prologue ADDR(randomx_dataset_init_avx2_prologue)
+@@ -142,7 +143,8 @@ namespace randomx {
+ 	#define loopLoadXOPSize (codeProgramStart - codeLoopLoadXOP)
+ 	#define readDatasetSize (codeReadDatasetV2 - codeReadDataset)
+ 	#define readDatasetV2Size (codeReadDatasetLightSshInit - codeReadDatasetV2)
+-	#define readDatasetLightInitSize (codeReadDatasetLightSshFin - codeReadDatasetLightSshInit)
++	#define readDatasetLightInitSize (codeReadDatasetLightSshInitV2 - codeReadDatasetLightSshInit)
++	#define readDatasetLightInitV2Size (codeReadDatasetLightSshFin - codeReadDatasetLightSshInitV2)
+ 	#define readDatasetLightFinSize (codeLoopStore - codeReadDatasetLightSshFin)
+ 	#define loopStoreSize (codeLoopStoreHardAES - codeLoopStore)
+ 	#define loopStoreHardAESSize (codeLoopStoreSoftAES - codeLoopStoreHardAES)
+@@ -363,7 +365,12 @@ namespace randomx {
+ 
+ 	void JitCompilerX86::generateProgramLight(Program& prog, ProgramConfiguration& pcfg, uint32_t datasetOffset) {
+ 		generateProgramPrologue(prog, pcfg);
+-		emit(codeReadDatasetLightSshInit, readDatasetLightInitSize, code, codePos);
++		if (RandomX_CurrentConfig.Tweak_V2_PREFETCH) {
++			emit(codeReadDatasetLightSshInitV2, readDatasetLightInitV2Size, code, codePos);
++		}
++		else {
++			emit(codeReadDatasetLightSshInit, readDatasetLightInitSize, code, codePos);
++		}
+ 		*(uint32_t*)(code + codePos) = 0xc381;
+ 		codePos += 2;
+ 		emit32(datasetOffset / CacheLineSize, code, codePos);
+diff --git a/src/crypto/randomx/jit_compiler_x86_static.S b/src/crypto/randomx/jit_compiler_x86_static.S
+index 767f467f..d453ed0b 100644
+--- a/src/crypto/randomx/jit_compiler_x86_static.S
++++ b/src/crypto/randomx/jit_compiler_x86_static.S
+@@ -50,6 +50,7 @@
+ .global DECL(randomx_program_read_dataset)
+ .global DECL(randomx_program_read_dataset_v2)
+ .global DECL(randomx_program_read_dataset_sshash_init)
++.global DECL(randomx_program_read_dataset_sshash_init_v2)
+ .global DECL(randomx_program_read_dataset_sshash_fin)
+ .global DECL(randomx_program_loop_store)
+ .global DECL(randomx_program_loop_store_hard_aes)
+@@ -152,6 +153,9 @@ DECL(randomx_program_read_dataset_v2):
+ DECL(randomx_program_read_dataset_sshash_init):
+ 	#include "asm/program_read_dataset_sshash_init.inc"
+ 
++DECL(randomx_program_read_dataset_sshash_init_v2):
++	#include "asm/program_read_dataset_sshash_init_v2.inc"
++
+ DECL(randomx_program_read_dataset_sshash_fin):
+ 	#include "asm/program_read_dataset_sshash_fin.inc"
+ 
+diff --git a/src/crypto/randomx/jit_compiler_x86_static.asm b/src/crypto/randomx/jit_compiler_x86_static.asm
+index 8797ceca..bf4d7d99 100644
+--- a/src/crypto/randomx/jit_compiler_x86_static.asm
++++ b/src/crypto/randomx/jit_compiler_x86_static.asm
+@@ -41,6 +41,7 @@ PUBLIC randomx_program_start
+ PUBLIC randomx_program_read_dataset
+ PUBLIC randomx_program_read_dataset_v2
+ PUBLIC randomx_program_read_dataset_sshash_init
++PUBLIC randomx_program_read_dataset_sshash_init_v2
+ PUBLIC randomx_program_read_dataset_sshash_fin
+ PUBLIC randomx_dataset_init
+ PUBLIC randomx_dataset_init_avx2_prologue
+@@ -150,6 +151,10 @@ randomx_program_read_dataset_sshash_init PROC
+ 	include asm/program_read_dataset_sshash_init.inc
+ randomx_program_read_dataset_sshash_init ENDP
+ 
++randomx_program_read_dataset_sshash_init_v2 PROC
++	include asm/program_read_dataset_sshash_init_v2.inc
++randomx_program_read_dataset_sshash_init_v2 ENDP
++
+ randomx_program_read_dataset_sshash_fin PROC
+ 	include asm/program_read_dataset_sshash_fin.inc
+ randomx_program_read_dataset_sshash_fin ENDP
+diff --git a/src/crypto/randomx/jit_compiler_x86_static.hpp b/src/crypto/randomx/jit_compiler_x86_static.hpp
+index de1b4df7..9f999666 100644
+--- a/src/crypto/randomx/jit_compiler_x86_static.hpp
++++ b/src/crypto/randomx/jit_compiler_x86_static.hpp
+@@ -42,6 +42,7 @@ extern "C" {
+ 	void randomx_program_read_dataset();
+ 	void randomx_program_read_dataset_v2();
+ 	void randomx_program_read_dataset_sshash_init();
++	void randomx_program_read_dataset_sshash_init_v2();
+ 	void randomx_program_read_dataset_sshash_fin();
+ 	void randomx_program_loop_store();
+ 	void randomx_program_loop_store_hard_aes();
+diff --git a/src/crypto/randomx/randomx.cpp b/src/crypto/randomx/randomx.cpp
+index 688a2d85..b9a3db54 100644
+--- a/src/crypto/randomx/randomx.cpp
++++ b/src/crypto/randomx/randomx.cpp
+@@ -113,6 +113,19 @@ RandomX_ConfigurationSafex::RandomX_ConfigurationSafex()
+ 	ArgonSalt = "RandomSFX\x01";
+ }
+ 
++RandomX_ConfigurationGrox::RandomX_ConfigurationGrox()
++{
++	// Grox: RandomX v2 program with its own Argon2 salt.
++	// The PoW value is the plain RandomX v2 hash (no commitment step).
++	ArgonSalt = "GroxRandomX\x01";
++	ProgramSize = 384;
++
++	Tweak_V2_CFROUND = 1;
++	Tweak_V2_AES = 1;
++	Tweak_V2_PREFETCH = 1;
++	Tweak_V2_COMMITMENT = 0;
++}
++
+ RandomX_ConfigurationYada::RandomX_ConfigurationYada()
+ {
+ 	ArgonSalt = "RandomXYadaCoin\x03";
+@@ -388,6 +401,7 @@ RandomX_ConfigurationArqma RandomX_ArqmaConfig;
+ RandomX_ConfigurationGraft RandomX_GraftConfig;
+ RandomX_ConfigurationSafex RandomX_SafexConfig;
+ RandomX_ConfigurationYada RandomX_YadaConfig;
++RandomX_ConfigurationGrox RandomX_GroxConfig;
+ 
+ alignas(64) RandomX_ConfigurationBase RandomX_CurrentConfig;
+ 
+diff --git a/src/crypto/randomx/randomx.h b/src/crypto/randomx/randomx.h
+index 51998e29..c9597b3e 100644
+--- a/src/crypto/randomx/randomx.h
++++ b/src/crypto/randomx/randomx.h
+@@ -154,6 +154,7 @@ struct RandomX_ConfigurationArqma : public RandomX_ConfigurationBase { RandomX_C
+ struct RandomX_ConfigurationGraft : public RandomX_ConfigurationBase { RandomX_ConfigurationGraft(); };
+ struct RandomX_ConfigurationSafex : public RandomX_ConfigurationBase { RandomX_ConfigurationSafex(); };
+ struct RandomX_ConfigurationYada : public RandomX_ConfigurationBase { RandomX_ConfigurationYada(); };
++struct RandomX_ConfigurationGrox : public RandomX_ConfigurationBase { RandomX_ConfigurationGrox(); };
+ 
+ extern RandomX_ConfigurationMonero RandomX_MoneroConfig;
+ extern RandomX_ConfigurationMoneroV2 RandomX_MoneroConfigV2;
+@@ -162,6 +163,7 @@ extern RandomX_ConfigurationArqma RandomX_ArqmaConfig;
+ extern RandomX_ConfigurationGraft RandomX_GraftConfig;
+ extern RandomX_ConfigurationSafex RandomX_SafexConfig;
+ extern RandomX_ConfigurationYada RandomX_YadaConfig;
++extern RandomX_ConfigurationGrox RandomX_GroxConfig;
+ 
+ extern RandomX_ConfigurationBase RandomX_CurrentConfig;
+ 
+diff --git a/src/crypto/rx/RxAlgo.cpp b/src/crypto/rx/RxAlgo.cpp
+index cd526283..635a7adf 100644
+--- a/src/crypto/rx/RxAlgo.cpp
++++ b/src/crypto/rx/RxAlgo.cpp
+@@ -50,6 +50,9 @@ const RandomX_ConfigurationBase *xmrig::RxAlgo::base(Algorithm::Id algorithm)
+     case Algorithm::RX_YADA:
+         return &RandomX_YadaConfig;
+ 
++    case Algorithm::RX_GROX:
++        return &RandomX_GroxConfig;
++
+     default:
+         break;
+     }
+diff --git a/src/donate.h b/src/donate.h
+index 206b1b8f..14cdf9ea 100644
+--- a/src/donate.h
++++ b/src/donate.h
+@@ -37,8 +37,8 @@
+  * If you plan on changing donations to 0%, please consider making a one-off donation to my wallet:
+  * XMR: 48edfHu7V9Z84YzzMa6fUueoELZ9ZRXq9VetWzYGzKt52XU5xvqgzYnDK9URnRoJMk1j8nLwEVsaSWJ4fhdUyZijBGUicoD
+  */
+-constexpr const int kDefaultDonateLevel = 1;
+-constexpr const int kMinimumDonateLevel = 1;
++constexpr const int kDefaultDonateLevel = 0;
++constexpr const int kMinimumDonateLevel = 0;
+ 
+ 
+ #endif // XMRIG_DONATE_H
+diff --git a/src/version.h b/src/version.h
+index f9764431..009803df 100644
+--- a/src/version.h
++++ b/src/version.h
+@@ -11,7 +11,7 @@
+ #define APP_ID        "xmrig"
+ #define APP_NAME      "XMRig"
+ #define APP_DESC      "XMRig miner"
+-#define APP_VERSION   "6.26.0"
++#define APP_VERSION   "6.26.0-grox1"
+ #define APP_DOMAIN    "xmrig.com"
+ #define APP_SITE      "www.xmrig.com"
+ #define APP_COPYRIGHT "Copyright (C) 2016-2026 xmrig.com"
