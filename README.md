@@ -162,6 +162,11 @@ View key: bb0dd5b0061a6c00f23586a5f11c6b08dbd557369137240449d990c89fe59f02
 # then: refresh   and   show_transfers in
 ```
 
+**Early test mining (blocks 757–6,464).** Before November 14, 2026, some of my own test mining was
+pointed at this address by mistake (~2,300 GROX). These coins stay in the dev fund and follow the
+same rules as the rest of it. To see them as well, restore from height 0 instead of 4200. This
+wallet is no longer used for mining.
+
 ## Build from source
 
 ```bash
