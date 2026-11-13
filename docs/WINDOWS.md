@@ -75,6 +75,7 @@ and type the 25 words.
 | Windows Firewall asks about `groxd.exe` | **Allow** lets other Grox nodes connect to you (helps the network). **Cancel** is fine too: mining still works. |
 | Antivirus deleted or blocked `groxd.exe` | Many antivirus programs flag *every* crypto miner. Grox mines only when you press Start. Restore the file from quarantine and allow it, or reinstall. |
 | The wallet opened in my browser, plus a small "Grox is running" window | Your Windows lacks Microsoft Edge WebView2. The wallet works the same in the browser. To get the normal window, install the [WebView2 Runtime](https://developer.microsoft.com/microsoft-edge/webview2/) from Microsoft. |
+| Node stopped by itself and **Start node** does nothing | Windows Defender may have stopped `groxd.exe` as "potentially unwanted" (it does this to many miners). Open **Windows Security → Virus & threat protection → Protection history**, open the `groxd.exe` entry and choose **Allow on device**. Then press **Start node** again. |
 | "Node offline" for a long time | Press **Start node**. If it stops again, open `C:\ProgramData\grox\grox.log` and look at the last lines. |
 | "Port 8790 is used by another program" | Something else uses that port. Close it, or start the app with `GroxWallet.exe --port 8791`. |
 | Mining shows a low H/s | Normal in the first minute. Computers with less than 4 GB RAM mine in a slower mode. |
@@ -155,6 +156,7 @@ python windows\grox_wallet.py --bin-dir <folder with groxd.exe>
 - **الجدار الناري بيسأل عن `groxd.exe`**: **Allow** بيخلي أجهزة Grox التانية تتصل بيك (بيساعد الشبكة)، و**Cancel** برضه ماشي والتعدين هيشتغل.
 - **برنامج الحماية مسح `groxd.exe`**: برامج كتير بتعترض على أي برنامج تعدين. Grox مبيعدّنش غير لما تدوس ابدأ. رجّع الملف من الحجر واسمح بيه، أو ثبّت تاني.
 - **المحفظة فتحت في المتصفح ومعاها شاشة صغيرة "Grox is running"**: جهازك ناقصه Microsoft Edge WebView2. المحفظة شغالة عادي في المتصفح، ولو عايز الشاشة العادية ثبّت [WebView2 Runtime](https://developer.microsoft.com/microsoft-edge/webview2/).
+- **الشبكة وقفت لوحدها و"تشغيل الشبكة" مش بيعمل حاجة**: غالباً Windows Defender وقّف `groxd.exe` على إنه "برنامج غير مرغوب فيه" (بيعمل كده مع برامج تعدين كتير). افتح **Windows Security ← Virus & threat protection ← Protection history**، افتح سطر `groxd.exe` واختار **Allow on device**، وبعدين دوس **تشغيل الشبكة** تاني.
 - **"الشبكة مقفولة" لفترة طويلة**: دوس **تشغيل الشبكة**. لو وقفت تاني، افتح `C:\ProgramData\grox\grox.log` وبص على آخر السطور.
 
 </div>
