@@ -54,8 +54,11 @@ jobs:
   windows:
     uses: ./.github/workflows/windows.yml
 
+  xmrig:
+    uses: ./.github/workflows/xmrig.yml
+
   publish:
-    needs: [build, windows]
+    needs: [build, windows, xmrig]
     if: github.ref == 'refs/heads/main'
     runs-on: ubuntu-24.04
     permissions:
@@ -77,5 +80,5 @@ jobs:
           else
             gh release create "$TAG" dist/* --target "$GITHUB_SHA" \
               --repo "$GITHUB_REPOSITORY" --title "Grox $TAG" \
-              --notes "Windows: download GroxWallet-Setup-*-win-x64.exe (installer) or the portable zip. Linux: x64 packages for Ubuntu 22.04 and 24.04 (also WSL), or use install.sh which checks the SHA256 for you. Built by GitHub Actions from commit $GITHUB_SHA. Verify downloads with the .sha256 files."
+              --notes "Windows: download GroxWallet-Setup-*-win-x64.exe (installer) or the portable zip. Linux: x64 packages for Ubuntu 22.04 and 24.04 (also WSL), or use install.sh which checks the SHA256 for you. XMRig miner with Grox support (rx/grox): xmrig-grox-*-win-x64.zip and xmrig-grox-*-linux-x64.tar.gz. Built by GitHub Actions from commit $GITHUB_SHA. Verify downloads with the .sha256 files."
           fi

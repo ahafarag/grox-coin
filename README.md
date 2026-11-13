@@ -94,6 +94,23 @@ automatically through the public seed node.
 ~/grox/bin/grox-wallet-cli --wallet-file ~/<wallet-name>
 ```
 
+## Mining with XMRig
+
+Grox works with **XMRig** (algorithm `rx/grox`), usually the fastest CPU miner. Download
+**`xmrig-grox-6.26.0-win-x64.zip`** or **`xmrig-grox-6.26.0-linux-x64.tar.gz`** from the
+[latest release](https://github.com/ahafarag/grox-coin/releases/latest). It is the official XMRig 6.26.0
+plus the Grox patch in [`tools/xmrig`](tools/xmrig), built by GitHub Actions, with 0% donation.
+
+1. Keep your Grox node running (the Grox Wallet app or `~/grox/start.sh`), synced, with its own mining **stopped**.
+2. Put your Grox address in `start-grox-mining.cmd` (Windows) or `start-grox-mining.sh` (Linux) and run it.
+
+```bash
+xmrig --daemon -o 127.0.0.1:19881 -a rx/grox --coin GROX -u <your G... address>
+```
+
+XMRig mines solo against your own node: every block you find pays your address directly.
+Fastest with ~2.5 GB free RAM and huge pages. Antivirus programs often flag any miner, including XMRig.
+
 ## Safety
 
 - **Your 25 words are your wallet.** Anyone who sees them can take your coins. Never photograph,
@@ -216,6 +233,14 @@ curl -fsSL https://raw.githubusercontent.com/ahafarag/grox-coin/main/install.sh 
 3. المكافأة بتنزل في محفظتك، وبتتفتح بعد 60 بلوك (حوالي ساعة).
 
 للإيقاف: `~/grox/stop.sh`، وللمستكشف: `~/grox/explorer.sh` ثم **http://localhost:8792**
+
+### التعدين بـ XMRig
+
+Grox بتشتغل مع **XMRig** (الخوارزمية `rx/grox`)، وده غالباً أسرع برنامج تعدين للمعالج. نزّل
+**`xmrig-grox-6.26.0-win-x64.zip`** أو نسخة لينكس من [آخر إصدار](https://github.com/ahafarag/grox-coin/releases/latest).
+
+1. خلّي برنامج Grox Wallet شغّال ومتزامن، و**وقّف التعدين جوّاه**.
+2. حط عنوانك (بيبدأ بـ G) في ملف `start-grox-mining.cmd` وشغّله. أي بلوك تلاقيه بيتدفع لعنوانك على طول.
 
 ### الأمان
 
