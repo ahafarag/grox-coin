@@ -27,7 +27,7 @@ page, bot or service published by this project, you agree that:
    or cloud accounts you are not allowed to use for mining.
 4. **Your keys, your responsibility.** Grox wallets are non-custodial. Nobody, including the
    developers, can recover lost seed words or reverse a transfer.
-5. **Official sources only.** Grox has no official website. Download only from
+5. **Official sources only.** The only official website is https://groxcoin.com. Download only from
    https://github.com/ahafarag/grox-coin and verify the SHA256 checksums. The developers are not
    responsible for copies, forks, websites, apps, pools or services run by third parties.
 6. **Changes.** The software, the network rules and this disclaimer may change at any time.

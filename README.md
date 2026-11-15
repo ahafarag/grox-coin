@@ -9,12 +9,12 @@
 [العربية ↓](#العربية)
 
 > [!CAUTION]
-> **GROX HAS NO OFFICIAL WEBSITE. ANY `grox` DOMAIN (.COM, .ORG, .NET, .IO OR ANY OTHER) IS FAKE.**
-> Download Grox **only** from this GitHub repository. Never type your 25 words into any website.
+> **THE ONLY OFFICIAL GROX WEBSITE IS [groxcoin.com](https://groxcoin.com). ANY OTHER `grox` DOMAIN (.ORG, .NET, .IO OR ANY OTHER) IS FAKE.**
+> Download Grox **only** from this GitHub repository (the website links here too). Never type your 25 words into any website, including groxcoin.com.
 >
 > **The only official links:**
 > - Code and downloads: **https://github.com/ahafarag/grox-coin** ([releases](https://github.com/ahafarag/grox-coin/releases/latest), each with a SHA256 checksum)
-> - Grox page: **https://ahafarag.github.io/grox-coin/** (hosted by GitHub, same account)
+> - Website: **https://groxcoin.com**
 > - Block explorer: **https://d7vz9sqd109ta.cloudfront.net**
 > - Telegram news: **[@grox_coin](https://t.me/grox_coin)** · Telegram group: **[@grox_community](https://t.me/grox_community)** · bot: **[@grox_coin_bot](https://t.me/grox_coin_bot)**
 > - Discord: **https://discord.gg/V5PaU3SSY**
@@ -36,6 +36,7 @@
 | Privacy | Monero technology: stealth addresses, ring signatures (16), RingCT |
 | Addresses | start with `G` |
 | P2P port | 19880 |
+| Website | **https://groxcoin.com** |
 | Explorer | **https://d7vz9sqd109ta.cloudfront.net** |
 | Community | **Discord: https://discord.gg/V5PaU3SSY** · **Telegram: [@grox_community](https://t.me/grox_community)** · news [@grox_coin](https://t.me/grox_coin) · **[Bitcointalk ANN](https://bitcointalk.org/index.php?topic=5599717.0)** |
 
@@ -189,9 +190,9 @@ BSD-3-Clause, see [LICENSE](LICENSE).
 
 ## العربية
 
-> **⚠️ Grox ملهاش أي موقع رسمي. أي دومين باسم grox (‎.COM أو ‎.ORG أو ‎.NET أو غيره) مزيّف.**
-> نزّل Grox **من GitHub ده بس**، ومتكتبش الـ25 كلمة في أي موقع أبداً.
-> اللينكات الرسمية الوحيدة هي اللي فوق في الصندوق الأحمر (GitHub، صفحة GitHub، المستكشف، Telegram، Discord).
+> **⚠️ الموقع الرسمي الوحيد لـ Grox هو [groxcoin.com](https://groxcoin.com). أي دومين تاني باسم grox (‎.ORG أو ‎.NET أو غيره) مزيّف.**
+> نزّل Grox **من GitHub ده بس** (والموقع بيحوّلك هنا برضه)، ومتكتبش الـ25 كلمة في أي موقع أبداً، ولا حتى groxcoin.com.
+> اللينكات الرسمية الوحيدة هي اللي فوق في الصندوق الأحمر (GitHub، الموقع، المستكشف، Telegram، Discord).
 > الأدمن عمره ما هيبعتلك رسالة الأول أو يطلب منك الـ25 كلمة.
 > **الاستخدام على مسؤوليتك.** Grox بتتقدّم "زي ما هي" من غير أي ضمان، ومن غير أي مسؤولية عن أي خسارة أو ضرر. ومفيش هنا أي نصيحة مالية. التفاصيل في [DISCLAIMER](DISCLAIMER.md).
 
