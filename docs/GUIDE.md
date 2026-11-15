@@ -96,6 +96,11 @@ On the dashboard, press the big **START** button.
 
 Mining only runs while the Grox node is running. Close it with `~/grox/stop.sh` (step 8).
 
+**Small computer? Try the pool (beta).** Instead of waiting for your own block, mine with others on
+`pool.groxcoin.com` and get paid every time the pool finds a block, straight to your address. It needs
+only XMRig, no node: `xmrig -o pool.groxcoin.com:3333 -a rx/grox -u <your G... address>`
+(see [Pool mining](../README.md#pool-mining-beta-poolgroxcoincom)).
+
 ## 6. Balance, receiving and sending
 
 - **Balance:** shown at the top of the dashboard. "Spendable" is what you can send now.

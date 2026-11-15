@@ -16,6 +16,16 @@ SOLO MINING (no pool needed)
 Command line:
   xmrig --daemon -o 127.0.0.1:19881 -a rx/grox --coin GROX -u <your G... address>
 
+POOL MINING (beta, no node needed)
+Mine with others on the public P2Pool node and get paid regularly. Each block the pool finds
+pays every recent miner directly to their own address. No pool fee, no sign-up.
+1. Edit start-grox-pool.cmd (Windows) or start-grox-pool.sh (Linux): put your Grox address
+   after WALLET= (or just run it and paste the address when asked on Windows).
+2. Run the start file.
+
+Command line:
+  xmrig -o pool.groxcoin.com:3333 -a rx/grox -u <your G... address>
+
 Tips
 - Best speed needs ~2.5 GB free RAM (fast mode). With less RAM XMRig uses light mode (slower).
 - Huge pages help a lot: run XMRig as Administrator once (Windows) or see XMRig docs (Linux).

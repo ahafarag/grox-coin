@@ -44,9 +44,9 @@ jobs:
         run: |
           D="$PKG-linux-x64"
           mkdir -p "dist/$D"
-          cp xmrig/build/xmrig tools/xmrig/start-grox-mining.sh tools/xmrig/README.txt "dist/$D/"
+          cp xmrig/build/xmrig tools/xmrig/start-grox-mining.sh tools/xmrig/start-grox-pool.sh tools/xmrig/README.txt "dist/$D/"
           cp xmrig/LICENSE "dist/$D/LICENSE"
-          chmod +x "dist/$D/xmrig" "dist/$D/start-grox-mining.sh"
+          chmod +x "dist/$D/xmrig" "dist/$D/start-grox-mining.sh" "dist/$D/start-grox-pool.sh"
           cd dist && tar -czf "$D.tar.gz" "$D" && sha256sum "$D.tar.gz" > "$D.tar.gz.sha256"
           rm -rf "$D"
 
@@ -97,6 +97,7 @@ jobs:
           mkdir -p "dist/$D"
           cp xmrig/build/xmrig.exe "dist/$D/"
           sed 's/$/\r/' tools/xmrig/start-grox-mining.cmd > "dist/$D/start-grox-mining.cmd"
+          sed 's/$/\r/' tools/xmrig/start-grox-pool.cmd > "dist/$D/start-grox-pool.cmd"
           sed 's/$/\r/' tools/xmrig/README.txt > "dist/$D/README.txt"
           cp xmrig/LICENSE "dist/$D/LICENSE.txt"
           cd dist && zip -r -q "$D.zip" "$D" && sha256sum "$D.zip" > "$D.zip.sha256"

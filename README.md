@@ -16,6 +16,7 @@
 > - Code and downloads: **https://github.com/ahafarag/grox-coin** ([releases](https://github.com/ahafarag/grox-coin/releases/latest), each with a SHA256 checksum)
 > - Website: **https://groxcoin.com**
 > - Block explorer: **https://explorer.groxcoin.com**
+> - Mining pool (beta): **pool.groxcoin.com:3333**
 > - Telegram news: **[@grox_coin](https://t.me/grox_coin)** · Telegram group: **[@grox_community](https://t.me/grox_community)** · bot: **[@grox_coin_bot](https://t.me/grox_coin_bot)**
 > - Discord: **https://discord.gg/V5PaU3SSY**
 > - Bitcointalk: **[Grox [ANN] thread](https://bitcointalk.org/index.php?topic=5599717.0)**
@@ -111,6 +112,23 @@ xmrig --daemon -o 127.0.0.1:19881 -a rx/grox --coin GROX -u <your G... address>
 
 XMRig mines solo against your own node: every block you find pays your address directly.
 Fastest with ~2.5 GB free RAM and huge pages. Antivirus programs often flag any miner, including XMRig.
+
+## Pool mining (beta): pool.groxcoin.com
+
+Small miners can join the public **P2Pool** node and get paid regularly instead of waiting for a
+solo block. No node, no sign-up, nothing to download except XMRig:
+
+```bash
+xmrig -o pool.groxcoin.com:3333 -a rx/grox -u <your G... address>
+```
+
+(from the next release, the XMRig package also includes `start-grox-pool.cmd` / `start-grox-pool.sh`)
+
+- **Decentralized payouts:** P2Pool keeps a share chain of everyone's recent work (PPLNS). When the
+  pool finds a block, the block itself pays every miner in the window directly to their address.
+  The pool never holds coins, so there is no balance, no minimum payout and no withdrawal.
+- **No pool fee.** The only cut is the network's usual 5% dev fund, the same as solo.
+- **Beta:** the pool is new. Solo mining keeps working exactly as before.
 
 ## Mining calculator & blocks-found leaderboard
 
@@ -260,6 +278,22 @@ Grox بتشتغل مع **XMRig** (الخوارزمية `rx/grox`)، وده غا�
 
 1. خلّي برنامج Grox Wallet شغّال ومتزامن، و**وقّف التعدين جوّاه**.
 2. حط عنوانك (بيبدأ بـ G) في ملف `start-grox-mining.cmd` وشغّله. أي بلوك تلاقيه بيتدفع لعنوانك على طول.
+
+### التعدين في البول (تجريبي): pool.groxcoin.com
+
+لو جهازك صغير وعايز تقبض بانتظام بدل ما تستنى بلوك لوحدك، اشتغل مع البول العام **P2Pool**.
+مش محتاج نود ولا تسجيل، بس XMRig:
+
+```
+xmrig -o pool.groxcoin.com:3333 -a rx/grox -u <عنوانك اللي بيبدأ بـ G>
+```
+
+(من الإصدار الجاي، ملف XMRig هيبقى فيه كمان `start-grox-pool.cmd`)
+
+- **الدفع لا مركزي:** لما البول يلاقي بلوك، البلوك نفسه بيدفع لكل معدّن شارك مؤخراً على عنوانه مباشرة.
+  البول عمره ما بيمسك فلوس، فمفيش رصيد ولا حد أدنى للسحب.
+- **مفيش رسوم للبول.** بس الـ5% المعتادة لصندوق المطوّر، زي التعدين الفردي بالظبط.
+- **تجريبي:** البول جديد، والتعدين الفردي شغّال زي ما هو.
 
 ### حاسبة التعدين ولوحة أبطال البلوكات
 
