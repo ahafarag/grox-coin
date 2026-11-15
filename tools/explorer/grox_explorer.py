@@ -222,6 +222,47 @@ def api_leaderboard(_q):
     return dict(cached("leaderboard", 10, BOARD.table), enabled=True)
 
 
+P2POOL_API = None  # P2Pool --data-api directory (public pool node), set by --p2pool-api-dir
+
+
+def _read_json(path):
+    with open(path) as f:
+        return json.load(f)
+
+
+def _pool_snapshot():
+    if not P2POOL_API:
+        return {"enabled": False}
+    try:
+        st = _read_json(os.path.join(P2POOL_API, "pool", "stats")).get("pool_statistics", {})
+    except (OSError, ValueError):
+        return {"enabled": True, "starting": True, "stratum": "pool.groxcoin.com:3333"}
+    try:
+        loc = _read_json(os.path.join(P2POOL_API, "local", "stratum"))
+    except (OSError, ValueError):
+        loc = {}
+    try:
+        blocks = _read_json(os.path.join(P2POOL_API, "pool", "blocks"))[:20]
+    except (OSError, ValueError):
+        blocks = []
+    # aggregate numbers only: never expose worker IPs or addresses
+    return {
+        "enabled": True,
+        "stratum": "pool.groxcoin.com:3333",
+        "pool": {k: st.get(k) for k in ("hashRate", "miners", "totalHashes", "lastBlockFound", "lastBlockFoundTime",
+                                        "totalBlocksFound", "pplnsWindowSize", "sidechainDifficulty", "sidechainHeight")},
+        "node": {"hashrate_15m": loc.get("hashrate_15m", 0), "hashrate_1h": loc.get("hashrate_1h", 0),
+                 "connections": loc.get("connections", 0), "shares_found": loc.get("shares_found", 0),
+                 "last_share_found_time": loc.get("last_share_found_time", 0)},
+        "blocks": [{k: b.get(k) for k in ("height", "hash", "ts", "difficulty")} for b in blocks],
+        "updated": int(time.time()),
+    }
+
+
+def api_pool(_q):
+    return cached("pool", 10, _pool_snapshot)
+
+
 def api_events(q):
     since = int(q.get("since", ["0"])[0])
     return {"events": BOARD.events(since) if BOARD else []}
@@ -229,7 +270,9 @@ def api_events(q):
 
 ROUTES = {"/api/info": api_info, "/api/blocks": api_blocks, "/api/block": api_block,
           "/api/tx": api_tx, "/api/mempool": api_mempool, "/api/search": api_search,
-          "/api/leaderboard": api_leaderboard, "/api/events": api_events}
+          "/api/leaderboard": api_leaderboard, "/api/events": api_events, "/api/pool": api_pool}
+
+ALLOWED_ORIGINS = {"https://groxcoin.com", "https://www.groxcoin.com"}
 
 # simple per-IP rate limit (requests per 10 s)
 _hits = {}
@@ -261,6 +304,11 @@ class Handler(BaseHTTPRequestHandler):
         self.send_header("Cache-Control", cache)
         self.send_header("X-Content-Type-Options", "nosniff")
         self.send_header("Referrer-Policy", "no-referrer")
+        # let the official website read public network stats
+        origin = self.headers.get("Origin", "")
+        if ctype == "application/json" and origin in ALLOWED_ORIGINS:
+            self.send_header("Access-Control-Allow-Origin", origin)
+            self.send_header("Vary", "Origin")
         self.end_headers()
         self.wfile.write(data)
 
@@ -287,7 +335,7 @@ class Handler(BaseHTTPRequestHandler):
 
 
 def main():
-    global DAEMON, BOARD
+    global DAEMON, BOARD, P2POOL_API
     ap = argparse.ArgumentParser(description="Grox block explorer")
     ap.add_argument("--port", type=int, default=8792)
     ap.add_argument("--public", action="store_true", help="listen on 0.0.0.0 instead of 127.0.0.1")
@@ -295,7 +343,10 @@ def main():
     ap.add_argument("--testnet", action="store_true")
     ap.add_argument("--leaderboard-dir", default=None,
                     help="folder with miners.json from the Telegram bot; turns on the blocks-found leaderboard")
+    ap.add_argument("--p2pool-api-dir", default=None,
+                    help="P2Pool --data-api folder of the public pool node; turns on /api/pool")
     a = ap.parse_args()
+    P2POOL_API = a.p2pool_api_dir
     DAEMON = a.daemon or ("http://127.0.0.1:29881" if a.testnet else "http://127.0.0.1:19881")
     if a.leaderboard_dir:
         sys.path.insert(0, HERE)
