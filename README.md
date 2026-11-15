@@ -15,7 +15,7 @@
 > **The only official links:**
 > - Code and downloads: **https://github.com/ahafarag/grox-coin** ([releases](https://github.com/ahafarag/grox-coin/releases/latest), each with a SHA256 checksum)
 > - Website: **https://groxcoin.com**
-> - Block explorer: **https://d7vz9sqd109ta.cloudfront.net**
+> - Block explorer: **https://explorer.groxcoin.com**
 > - Telegram news: **[@grox_coin](https://t.me/grox_coin)** · Telegram group: **[@grox_community](https://t.me/grox_community)** · bot: **[@grox_coin_bot](https://t.me/grox_coin_bot)**
 > - Discord: **https://discord.gg/V5PaU3SSY**
 > - Bitcointalk: **[Grox [ANN] thread](https://bitcointalk.org/index.php?topic=5599717.0)**
@@ -37,12 +37,12 @@
 | Addresses | start with `G` |
 | P2P port | 19880 |
 | Website | **https://groxcoin.com** |
-| Explorer | **https://d7vz9sqd109ta.cloudfront.net** |
+| Explorer | **https://explorer.groxcoin.com** |
 | Community | **Discord: https://discord.gg/V5PaU3SSY** · **Telegram: [@grox_community](https://t.me/grox_community)** · news [@grox_coin](https://t.me/grox_coin) · **[Bitcointalk ANN](https://bitcointalk.org/index.php?topic=5599717.0)** |
 
 ---
 
-🔎 **Block explorer:** https://d7vz9sqd109ta.cloudfront.net
+🔎 **Block explorer:** https://explorer.groxcoin.com
 
 💬 **Community:** [Discord](https://discord.gg/V5PaU3SSY) · [Telegram group](https://t.me/grox_community) · [Telegram news channel](https://t.me/grox_coin) · [Bitcointalk ANN](https://bitcointalk.org/index.php?topic=5599717.0)
 
@@ -114,9 +114,9 @@ Fastest with ~2.5 GB free RAM and huge pages. Antivirus programs often flag any 
 
 ## Mining calculator & blocks-found leaderboard
 
-- **Calculator:** the [explorer](https://d7vz9sqd109ta.cloudfront.net/#/calc) shows how often your
+- **Calculator:** the [explorer](https://explorer.groxcoin.com/#/calc) shows how often your
   hashrate finds a block at today's difficulty (also `/calc 500` in the Telegram bot).
-- **Leaderboard (optional):** the [explorer](https://d7vz9sqd109ta.cloudfront.net/#/leaderboard) ranks
+- **Leaderboard (optional):** the [explorer](https://explorer.groxcoin.com/#/leaderboard) ranks
   miners by blocks found. Grox payments are private, so it only counts miners who join: send
   `/register nickname address viewkey` to [@grox_coin_bot](https://t.me/grox_coin_bot) in a private chat.
   The Grox Wallet app writes this message for you (Receive → *Put your name on the blocks-found leaderboard*).
@@ -145,7 +145,7 @@ Fastest with ~2.5 GB free RAM and huge pages. Antivirus programs often flag any 
 **Community reserve: 100,000 GROX, publicly visible.** 100,000 GROX from the premine were moved
 to the dedicated dev fund wallet below, reserved for community rewards: bounties (XMRig support,
 ARM builds, translations, tools) and contests. Transaction
-[`b755b187…99a97d`](https://d7vz9sqd109ta.cloudfront.net/#/tx/b755b1875bd6d587d03b4f8c8218c2ac06381e51e116eafb105e0e136c99a97d)
+[`b755b187…99a97d`](https://explorer.groxcoin.com/#/tx/b755b1875bd6d587d03b4f8c8218c2ac06381e51e116eafb105e0e136c99a97d)
 (block 4,211). With the view key below, anyone can confirm the amount.
 
 **Dedicated dev fund wallet (from block 12,000, v1.2.0).** From block 12,000 the 5% goes to a
@@ -208,7 +208,7 @@ BSD-3-Clause, see [LICENSE](LICENSE).
 | مكافأة البلوك | حوالي 4.76 في الأول، وبتقل ببطء على سنين |
 | للمطوّر | **5%** مرة واحدة في البلوك 2، و**5%** من كل بلوك، والقاعدتين في الكود وكل الشبكة بتتأكد منهم |
 | الخصوصية | تقنية Monero: محدش يقدر يشوف رصيد حد من عنوانه |
-| المستكشف | **https://d7vz9sqd109ta.cloudfront.net** |
+| المستكشف | **https://explorer.groxcoin.com** |
 | المجتمع | **Discord: https://discord.gg/V5PaU3SSY** · **Telegram: [@grox_community](https://t.me/grox_community)** (فيه قسم عربي) · **[Bitcointalk ANN](https://bitcointalk.org/index.php?topic=5599717.0)** |
 
 
@@ -263,8 +263,8 @@ Grox بتشتغل مع **XMRig** (الخوارزمية `rx/grox`)، وده غا�
 
 ### حاسبة التعدين ولوحة أبطال البلوكات
 
-- **الحاسبة:** [المستكشف](https://d7vz9sqd109ta.cloudfront.net/#/calc) بيقولك سرعتك بتلاقي بلوك كل قد إيه بالصعوبة الحالية.
-- **لوحة الأبطال (اختياري):** [المستكشف](https://d7vz9sqd109ta.cloudfront.net/#/leaderboard) بيرتّب المُعدِّنين بعدد البلوكات.
+- **الحاسبة:** [المستكشف](https://explorer.groxcoin.com/#/calc) بيقولك سرعتك بتلاقي بلوك كل قد إيه بالصعوبة الحالية.
+- **لوحة الأبطال (اختياري):** [المستكشف](https://explorer.groxcoin.com/#/leaderboard) بيرتّب المُعدِّنين بعدد البلوكات.
   ابعت `/register nickname address viewkey` لـ [@grox_coin_bot](https://t.me/grox_coin_bot) في محادثة خاصة،
   أو خلّي برنامج Grox Wallet يجهّزهالك (استقبال ← *حط اسمك على لوحة أبطال البلوكات*). اسمك المستعار بس هو اللي بيظهر،
   ومفتاح المشاهدة بيشوف الفلوس اللي بتوصلك بس عمره ما يقدر يصرفها.

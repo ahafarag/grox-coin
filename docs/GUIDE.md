@@ -169,7 +169,7 @@ connect to yours.
 
 ## 10. Block explorer
 
-Public explorer, nothing to install: **https://d7vz9sqd109ta.cloudfront.net**
+Public explorer, nothing to install: **https://explorer.groxcoin.com**
 
 Or run your own copy against your own node:
 

@@ -177,7 +177,7 @@ curl -fsSL https://raw.githubusercontent.com/ahafarag/grox-coin/main/install.sh 
 
 ## ١٠. مستكشف البلوكات
 
-المستكشف العام، من غير ما تثبّت حاجة: **https://d7vz9sqd109ta.cloudfront.net**
+المستكشف العام، من غير ما تثبّت حاجة: **https://explorer.groxcoin.com**
 
 أو شغّل نسخة على جهازك مربوطة بالـ node بتاعك:
 
