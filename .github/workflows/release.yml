@@ -26,6 +26,11 @@ jobs:
     steps:
       - uses: actions/checkout@v4
 
+      - name: Check version label matches release/VERSION
+        run: |
+          V="$(tr -d '[:space:]' < release/VERSION)"
+          grep -q "#define DEF_MONERO_VERSION \"$V\"" src/version.cpp.in || { echo "src/version.cpp.in must say $V"; exit 1; }
+
       - name: Install build dependencies
         run: |
           sudo apt-get update
