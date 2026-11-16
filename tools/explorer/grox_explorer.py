@@ -260,7 +260,44 @@ def _pool_snapshot():
 
 
 def api_pool(_q):
-    return cached("pool", 10, _pool_snapshot)
+    snap = cached("pool", 10, _pool_snapshot)
+    if POOL and snap.get("pool"):
+        snap = dict(snap, window_miners=len(POOL.window.get("miners", [])))
+    return snap
+
+
+POOL = None  # pool explorer index (grox_pool.PoolIndex), set by --pool-db
+
+
+def _need_pool():
+    if not POOL:
+        raise NotFound("pool explorer is off")
+
+
+def api_pool_blocks(q):
+    _need_pool()
+    before = q.get("before", [None])[0]
+    limit = q.get("limit", ["50"])[0]
+    return cached(f"pblocks:{before}:{limit}", 10, lambda: POOL.blocks(limit, before))
+
+
+def api_pool_block(q):
+    _need_pool()
+    key = q.get("id", [""])[0].strip()
+    if not (key.isdigit() or HEX64.match(key)):
+        raise ValueError
+    r = cached("pblock:" + key, 10, lambda: POOL.block(key.lower()))
+    if not r:
+        raise NotFound("not a pool block")
+    return r
+
+
+def api_pool_miner(q):
+    _need_pool()
+    addr = q.get("address", [""])[0].strip()
+    if not POOL.valid_address(addr):
+        raise NotFound("not a valid Grox address (use the full address, starting with G)")
+    return cached("pminer:" + addr, 10, lambda: POOL.miner(addr))
 
 
 def api_events(q):
@@ -270,7 +307,8 @@ def api_events(q):
 
 ROUTES = {"/api/info": api_info, "/api/blocks": api_blocks, "/api/block": api_block,
           "/api/tx": api_tx, "/api/mempool": api_mempool, "/api/search": api_search,
-          "/api/leaderboard": api_leaderboard, "/api/events": api_events, "/api/pool": api_pool}
+          "/api/leaderboard": api_leaderboard, "/api/events": api_events, "/api/pool": api_pool,
+          "/api/pool/blocks": api_pool_blocks, "/api/pool/block": api_pool_block, "/api/pool/miner": api_pool_miner}
 
 ALLOWED_ORIGINS = {"https://groxcoin.com", "https://www.groxcoin.com"}
 
@@ -335,7 +373,7 @@ class Handler(BaseHTTPRequestHandler):
 
 
 def main():
-    global DAEMON, BOARD, P2POOL_API
+    global DAEMON, BOARD, P2POOL_API, POOL
     ap = argparse.ArgumentParser(description="Grox block explorer")
     ap.add_argument("--port", type=int, default=8792)
     ap.add_argument("--public", action="store_true", help="listen on 0.0.0.0 instead of 127.0.0.1")
@@ -345,6 +383,8 @@ def main():
                     help="folder with miners.json from the Telegram bot; turns on the blocks-found leaderboard")
     ap.add_argument("--p2pool-api-dir", default=None,
                     help="P2Pool --data-api folder of the public pool node; turns on /api/pool")
+    ap.add_argument("--pool-db", default=None,
+                    help="SQLite file for the pool explorer (needs --p2pool-api-dir): per-address shares and payouts")
     a = ap.parse_args()
     P2POOL_API = a.p2pool_api_dir
     DAEMON = a.daemon or ("http://127.0.0.1:29881" if a.testnet else "http://127.0.0.1:19881")
@@ -354,6 +394,12 @@ def main():
         BOARD = Leaderboard(a.leaderboard_dir, rpc, testnet=a.testnet)
         BOARD.start()
         print(f"Leaderboard on (registrations in {a.leaderboard_dir}/miners.json)")
+    if a.pool_db and a.p2pool_api_dir:
+        sys.path.insert(0, HERE)
+        from grox_pool import PoolIndex
+        POOL = PoolIndex(a.p2pool_api_dir, a.pool_db, rpc, testnet=a.testnet)
+        POOL.start()
+        print(f"Pool explorer on (index in {a.pool_db})")
     host = "0.0.0.0" if a.public else "127.0.0.1"
     try:
         srv = ThreadingHTTPServer((host, a.port), Handler)
