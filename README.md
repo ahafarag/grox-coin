@@ -19,6 +19,7 @@
 > - Mining pool (beta): **pool.groxcoin.com:3333**
 > - Telegram news: **[@grox_coin](https://t.me/grox_coin)** · Telegram group: **[@grox_community](https://t.me/grox_community)** · bot: **[@grox_coin_bot](https://t.me/grox_coin_bot)**
 > - Discord: **https://discord.gg/V5PaU3SSY**
+> - X (Twitter): **[@grox_coin](https://x.com/grox_coin)**
 > - Bitcointalk: **[Grox [ANN] thread](https://bitcointalk.org/index.php?topic=5599717.0)**
 >
 > Admins never DM you first and never ask for your 25 words.
@@ -39,13 +40,13 @@
 | P2P port | 19880 |
 | Website | **https://groxcoin.com** |
 | Explorer | **https://explorer.groxcoin.com** |
-| Community | **Discord: https://discord.gg/V5PaU3SSY** · **Telegram: [@grox_community](https://t.me/grox_community)** · news [@grox_coin](https://t.me/grox_coin) · **[Bitcointalk ANN](https://bitcointalk.org/index.php?topic=5599717.0)** |
+| Community | **Discord: https://discord.gg/V5PaU3SSY** · **Telegram: [@grox_community](https://t.me/grox_community)** · news [@grox_coin](https://t.me/grox_coin) · **X: [@grox_coin](https://x.com/grox_coin)** · **[Bitcointalk ANN](https://bitcointalk.org/index.php?topic=5599717.0)** |
 
 ---
 
 🔎 **Block explorer:** https://explorer.groxcoin.com
 
-💬 **Community:** [Discord](https://discord.gg/V5PaU3SSY) · [Telegram group](https://t.me/grox_community) · [Telegram news channel](https://t.me/grox_coin) · [Bitcointalk ANN](https://bitcointalk.org/index.php?topic=5599717.0)
+💬 **Community:** [Discord](https://discord.gg/V5PaU3SSY) · [Telegram group](https://t.me/grox_community) · [Telegram news channel](https://t.me/grox_coin) · [X @grox_coin](https://x.com/grox_coin) · [Bitcointalk ANN](https://bitcointalk.org/index.php?topic=5599717.0)
 
 > ⬆️ **Network upgrade at block 12,000:** all nodes and miners must run **v1.2.0 or newer** before then. Older versions stop following the network at that block.
 
@@ -227,7 +228,7 @@ BSD-3-Clause, see [LICENSE](LICENSE).
 | للمطوّر | **5%** مرة واحدة في البلوك 2، و**5%** من كل بلوك، والقاعدتين في الكود وكل الشبكة بتتأكد منهم |
 | الخصوصية | تقنية Monero: محدش يقدر يشوف رصيد حد من عنوانه |
 | المستكشف | **https://explorer.groxcoin.com** |
-| المجتمع | **Discord: https://discord.gg/V5PaU3SSY** · **Telegram: [@grox_community](https://t.me/grox_community)** (فيه قسم عربي) · **[Bitcointalk ANN](https://bitcointalk.org/index.php?topic=5599717.0)** |
+| المجتمع | **Discord: https://discord.gg/V5PaU3SSY** · **Telegram: [@grox_community](https://t.me/grox_community)** (فيه قسم عربي) · **X: [@grox_coin](https://x.com/grox_coin)** · **[Bitcointalk ANN](https://bitcointalk.org/index.php?topic=5599717.0)** |
 
 
 📖 **الدليل الكامل خطوة بخطوة:** [بالعربي](docs/GUIDE.ar.md)
