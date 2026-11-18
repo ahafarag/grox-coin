@@ -15,6 +15,7 @@
 > **The only official links:**
 > - Code and downloads: **https://github.com/ahafarag/grox-coin** ([releases](https://github.com/ahafarag/grox-coin/releases/latest), each with a SHA256 checksum)
 > - Website: **https://groxcoin.com**
+> - Whitepaper: **https://groxcoin.com/whitepaper/** ([PDF](https://groxcoin.com/whitepaper/grox-whitepaper.pdf))
 > - Block explorer: **https://explorer.groxcoin.com**
 > - Mining pool (beta): **pool.groxcoin.com:3333**
 > - Telegram news: **[@grox_coin](https://t.me/grox_coin)** · Telegram group: **[@grox_community](https://t.me/grox_community)** · bot: **[@grox_coin_bot](https://t.me/grox_coin_bot)**
@@ -39,10 +40,13 @@
 | Addresses | start with `G` |
 | P2P port | 19880 |
 | Website | **https://groxcoin.com** |
+| Whitepaper | **https://groxcoin.com/whitepaper/** |
 | Explorer | **https://explorer.groxcoin.com** |
 | Community | **Discord: https://discord.gg/V5PaU3SSY** · **Telegram: [@grox_community](https://t.me/grox_community)** · news [@grox_coin](https://t.me/grox_coin) · **X: [@grox_coin](https://x.com/grox_coin)** · **[Bitcointalk ANN](https://bitcointalk.org/index.php?topic=5599717.0)** |
 
 ---
+
+📄 **Whitepaper:** https://groxcoin.com/whitepaper/
 
 🔎 **Block explorer:** https://explorer.groxcoin.com
 
