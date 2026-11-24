@@ -80,10 +80,13 @@ jobs:
           GH_TOKEN: ${{ github.token }}
         run: |
           TAG="v$(tr -d '[:space:]' < release/VERSION)"
+          STD="Windows: download GroxWallet-Setup-*-win-x64.exe (installer) or the portable zip. Linux: x64 packages for Ubuntu 22.04 and 24.04 (also WSL), or use install.sh which checks the SHA256 for you. XMRig miner with Grox support (rx/grox): xmrig-grox-*-win-x64.zip and xmrig-grox-*-linux-x64.tar.gz. Built by GitHub Actions from commit $GITHUB_SHA. Verify downloads with the .sha256 files."
+          NOTES="docs/RELEASE_NOTES_${TAG#v}.md"
+          if [ -f "$NOTES" ]; then { tail -n +2 "$NOTES"; printf '\n## Downloads\n%s\n' "$STD"; } > notes.md; else printf '%s\n' "$STD" > notes.md; fi
           if gh release view "$TAG" --repo "$GITHUB_REPOSITORY" >/dev/null 2>&1; then
             gh release upload "$TAG" dist/* --clobber --repo "$GITHUB_REPOSITORY"
           else
             gh release create "$TAG" dist/* --target "$GITHUB_SHA" \
               --repo "$GITHUB_REPOSITORY" --title "Grox $TAG" \
-              --notes "Windows: download GroxWallet-Setup-*-win-x64.exe (installer) or the portable zip. Linux: x64 packages for Ubuntu 22.04 and 24.04 (also WSL), or use install.sh which checks the SHA256 for you. XMRig miner with Grox support (rx/grox): xmrig-grox-*-win-x64.zip and xmrig-grox-*-linux-x64.tar.gz. Built by GitHub Actions from commit $GITHUB_SHA. Verify downloads with the .sha256 files."
+              --notes-file notes.md
           fi

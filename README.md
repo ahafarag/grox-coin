@@ -52,7 +52,7 @@
 
 💬 **Community:** [Discord](https://discord.gg/V5PaU3SSY) · [Telegram group](https://t.me/grox_community) · [Telegram news channel](https://t.me/grox_coin) · [X @grox_coin](https://x.com/grox_coin) · [Bitcointalk ANN](https://bitcointalk.org/index.php?topic=5599717.0)
 
-> ⬆️ **Network upgrade at block 12,000:** all nodes and miners must run **v1.2.0 or newer** before then. Older versions stop following the network at that block.
+> ⬆️ **Updates:** from v1.2.7 the Grox Wallet app tells you when a new version is out (Windows: one-click **Update now**). On Linux run `~/grox/update.sh`. Updates come only from the GitHub releases and are checked with SHA256.
 
 📖 **Full step-by-step guide:** [English](docs/GUIDE.md) · [العربية](docs/GUIDE.ar.md)
 
@@ -89,6 +89,7 @@ open it and run the command above. The wallet opens in your normal Windows brows
 ```bash
 ~/grox/stop.sh         # stops the wallet and the node
 ~/grox/explorer.sh     # block explorer at http://localhost:8792
+~/grox/update.sh       # update to the latest release (your wallets and blockchain are kept)
 ```
 
 Wallets are saved in your home folder (`*.keys`). The node finds the network
@@ -146,6 +147,18 @@ xmrig -o pool.groxcoin.com:3333 -a rx/grox -u <your G... address>
   Only your nickname is shown. The view key stays on the Grox server; it can see the coins your address
   receives but can never spend them. For full privacy, mine to a wallet used only for mining.
   `/unregister` removes you, and your first block after joining is announced in [@grox_coin](https://t.me/grox_coin).
+
+## Prove you mined a block (for bounties and the first-block reward)
+
+Solo-mined a block and need to show it? One step, same on Windows and Linux, nothing to find or copy by hand:
+
+- **Grox Wallet app:** Receive → *Prove you mined a block*, press the button, copy the line, send it in a private message.
+- **Command line** (`grox-wallet-cli`): type `mining_proof`. It prints one line (and saves it to `grox_mining_proof.txt`).
+- **Checking a proof:** in the app (same window, *Check someone's proof*) or in the CLI: `check_mining_proof <paste the whole line>`.
+  It confirms the reward is a mined block at the stated height and was paid to the stated address.
+
+The line looks like `GROX-MINING-PROOF height=… address=… txid=… proof=…`. It never contains your keys or balance.
+Never share your 25 words or your password. (Pool payouts are normal payments, not block rewards, so they are not covered by this proof.)
 
 ## Safety
 
@@ -275,6 +288,8 @@ curl -fsSL https://raw.githubusercontent.com/ahafarag/grox-coin/main/install.sh 
 3. المكافأة بتنزل في محفظتك، وبتتفتح بعد 60 بلوك (حوالي ساعة).
 
 للإيقاف: `~/grox/stop.sh`، وللمستكشف: `~/grox/explorer.sh` ثم **http://localhost:8792**
+
+للتحديث لآخر إصدار: `~/grox/update.sh` (المحافظ والبلوك تشين بيفضلوا زي ما هم). وبرنامج Grox Wallet بيقولك لما يكون فيه إصدار جديد.
 
 ### التعدين بـ XMRig
 

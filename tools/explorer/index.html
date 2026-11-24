@@ -185,7 +185,11 @@ function applyChrome() {
   document.documentElement.lang = LANG; document.documentElement.dir = LANG === 'ar' ? 'rtl' : 'ltr';
   $('q').placeholder = t('ph'); $('searchBtn').textContent = t('search');
   $('langBtn').textContent = LANG === 'ar' ? 'English' : 'عربي';
-  $('foot').textContent = t('foot');
+  $('foot').textContent = t('foot') + ' ';
+  [['groxcoin.com', 'https://groxcoin.com'], ['Whitepaper', 'https://groxcoin.com/whitepaper/'], ['X', 'https://x.com/grox_coin'], ['Telegram', 'https://t.me/grox_community'], ['Discord', 'https://discord.gg/V5PaU3SSY']].forEach(([n, u], i) => {
+    if (i) $('foot').append(' · ');
+    const a = document.createElement('a'); a.href = u; a.textContent = n; a.target = '_blank'; a.rel = 'noopener'; $('foot').append(a);
+  });
   $('navHome').textContent = t('navHome'); $('navCalc').textContent = t('navCalc'); $('navTop').textContent = t('navTop');
 }
 $('langBtn').onclick = () => { LANG = LANG === 'ar' ? 'en' : 'ar'; lsSet('grox.lang', LANG); applyChrome(); route(); };

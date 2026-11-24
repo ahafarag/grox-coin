@@ -201,6 +201,8 @@ namespace cryptonote
     bool check_tx_key(const std::vector<std::string> &args);
     bool get_tx_proof(const std::vector<std::string> &args);
     bool check_tx_proof(const std::vector<std::string> &args);
+    bool mining_proof(const std::vector<std::string> &args);
+    bool check_mining_proof(const std::vector<std::string> &args);
     bool get_spend_proof(const std::vector<std::string> &args);
     bool check_spend_proof(const std::vector<std::string> &args);
     bool get_reserve_proof(const std::vector<std::string> &args);

@@ -101,6 +101,10 @@ Mining only runs while the Grox node is running. Close it with `~/grox/stop.sh` 
 only XMRig, no node: `xmrig -o pool.groxcoin.com:3333 -a rx/grox -u <your G... address>`
 (see [Pool mining](../README.md#pool-mining-beta-poolgroxcoincom)).
 
+**Found a block and want to prove it?** In the Grox Wallet app press *Receive → Prove you mined a block*, or in
+`grox-wallet-cli` type `mining_proof`. Copy the one line it gives you and send it in a private message.
+(Check someone else's with `check_mining_proof <the whole line>`.) No keys or balance are revealed.
+
 ## 6. Balance, receiving and sending
 
 - **Balance:** shown at the top of the dashboard. "Spendable" is what you can send now.
@@ -133,7 +137,8 @@ file is protected by your password. Still, the 25 words are what matters.
 |---|---|
 | Stop wallet + node + mining | `~/grox/stop.sh` |
 | Start again | `~/grox/start.sh` |
-| Update to the latest version | run the install line from step 3 again (your wallets are kept) |
+| Update to the latest version | `~/grox/update.sh` (v1.2.7 and newer; older installs: run the install line from step 3 again). Your wallets and blockchain are kept |
+| Only check for an update | `~/grox/update.sh --check` |
 | Uninstall | `~/grox/stop.sh` then `rm -rf ~/grox ~/.grox` |
 
 Uninstalling does **not** delete your wallet files. Your 25 words still restore everything.

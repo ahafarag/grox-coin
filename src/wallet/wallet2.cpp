@@ -13235,6 +13235,36 @@ std::string wallet2::get_tx_proof(const crypto::hash &txid, const cryptonote::ac
     return get_tx_proof(tx, tx_key, additional_tx_keys, address, is_subaddress, message);
 }
 
+bool wallet2::get_coinbase_info(const crypto::hash &txid, uint64_t &block_height, bool &is_coinbase, bool &in_pool)
+{
+  COMMAND_RPC_GET_TRANSACTIONS::request req;
+  COMMAND_RPC_GET_TRANSACTIONS::response res;
+  req.txs_hashes.push_back(epee::string_tools::pod_to_hex(txid));
+  req.decode_as_json = false;
+  req.prune = true;
+
+  bool ok;
+  {
+    const boost::lock_guard<boost::recursive_mutex> lock{m_daemon_rpc_mutex};
+    uint64_t pre_call_credits = m_rpc_payment_state.credits;
+    req.client = get_client_signature();
+    ok = net_utils::invoke_http_json("/gettransactions", req, res, *m_http_client);
+    if (!ok || res.txs.size() != 1)
+      return false;
+    check_rpc_cost("/gettransactions", res.credits, pre_call_credits, COST_PER_TX);
+  }
+
+  cryptonote::transaction tx;
+  crypto::hash tx_hash;
+  if (!get_pruned_tx(res.txs.front(), tx, tx_hash) || tx_hash != txid)
+    return false;
+
+  is_coinbase = tx.vin.size() == 1 && tx.vin[0].type() == typeid(cryptonote::txin_gen);
+  in_pool = res.txs.front().in_pool;
+  block_height = res.txs.front().block_height;
+  return true;
+}
+
 std::string wallet2::get_tx_proof(const cryptonote::transaction &tx, const crypto::secret_key &tx_key, const std::vector<crypto::secret_key> &additional_tx_keys, const cryptonote::account_public_address &address, bool is_subaddress, const std::string &message) const
 {
   hw::device &hwdev = m_account.get_device();

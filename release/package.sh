@@ -17,7 +17,7 @@ done
 mkdir -p "$STAGE/wallet-app" "$STAGE/explorer"
 cp "$ROOT/tools/wallet-app/grox_app.py" "$ROOT/tools/wallet-app/index.html" "$ROOT/release/VERSION" "$STAGE/wallet-app/"
 cp "$ROOT/tools/explorer/grox_explorer.py" "$ROOT/tools/explorer/index.html" "$STAGE/explorer/"
-install -m 755 "$ROOT/release/start.sh" "$ROOT/release/stop.sh" "$ROOT/release/explorer.sh" "$STAGE/"
+install -m 755 "$ROOT/release/start.sh" "$ROOT/release/stop.sh" "$ROOT/release/explorer.sh" "$ROOT/release/update.sh" "$STAGE/"
 cp "$ROOT/README.md" "$ROOT/LICENSE" "$STAGE/"
 
 tar -C "$OUT" -czf "$OUT/$NAME.tar.gz" "$NAME"

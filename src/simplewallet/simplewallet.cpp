@@ -226,6 +226,8 @@ namespace
   const char* USAGE_CHECK_TX_KEY("check_tx_key <txid> <txkey> <address>");
   const char* USAGE_GET_TX_PROOF("get_tx_proof <txid> <address> [<message>]");
   const char* USAGE_CHECK_TX_PROOF("check_tx_proof <txid> <address> <signature_file> [<message>]");
+  const char* USAGE_MINING_PROOF("mining_proof [<block_height>]");
+  const char* USAGE_CHECK_MINING_PROOF("check_mining_proof <proof line>");
   const char* USAGE_GET_SPEND_PROOF("get_spend_proof <txid> [<message>]");
   const char* USAGE_CHECK_SPEND_PROOF("check_spend_proof <txid> <signature_file> [<message>]");
   const char* USAGE_GET_RESERVE_PROOF("get_reserve_proof (all|<amount>) [<message>]");
@@ -3594,6 +3596,14 @@ simple_wallet::simple_wallet()
                            boost::bind(&simple_wallet::on_command, this, &simple_wallet::check_tx_proof, _1),
                            tr(USAGE_CHECK_TX_PROOF),
                            tr("Check the proof for funds going to <address> in <txid> with the challenge string <message> if any."));
+  m_cmd_binder.set_handler("mining_proof",
+                           boost::bind(&simple_wallet::on_command, this, &simple_wallet::mining_proof, _1),
+                           tr(USAGE_MINING_PROOF),
+                           tr("Prove that this wallet mined a block: prints one line to copy and send (and saves it to grox_mining_proof.txt). Uses your latest mined block, or the block at <block_height>. It does not reveal your keys or balance."));
+  m_cmd_binder.set_handler("check_mining_proof",
+                           boost::bind(&simple_wallet::on_command, this, &simple_wallet::check_mining_proof, _1),
+                           tr(USAGE_CHECK_MINING_PROOF),
+                           tr("Check a proof line made by mining_proof: paste the whole line after the command."));
   m_cmd_binder.set_handler("get_spend_proof",
                            boost::bind(&simple_wallet::on_command, this, &simple_wallet::get_spend_proof, _1),
                            tr(USAGE_GET_SPEND_PROOF),
@@ -8490,6 +8500,165 @@ bool simple_wallet::check_tx_proof(const std::vector<std::string> &args)
     {
       fail_msg_writer() << tr("Bad signature");
     }
+  }
+  catch (const std::exception &e)
+  {
+    fail_msg_writer() << tr("error: ") << e.what();
+  }
+  return true;
+}
+//----------------------------------------------------------------------------------------------------
+bool simple_wallet::mining_proof(const std::vector<std::string> &args)
+{
+  CHECK_IF_BACKGROUND_SYNCING("cannot make a mining proof");
+
+  if (args.size() > 1)
+  {
+    PRINT_USAGE(USAGE_MINING_PROOF);
+    return true;
+  }
+
+  uint64_t want_height = 0;
+  if (args.size() == 1 && !epee::string_tools::get_xtype_from_string(want_height, args[0]))
+  {
+    fail_msg_writer() << tr("failed to parse block height");
+    return true;
+  }
+
+  if (!try_connect_to_daemon())
+    return true;
+
+  // block rewards received by this wallet; the newest one (or the one at <block_height>)
+  std::list<std::pair<crypto::hash, tools::wallet2::payment_details>> payments;
+  m_wallet->get_payments(payments, 0);
+  const tools::wallet2::payment_details *best = nullptr;
+  for (const auto &p : payments)
+  {
+    const tools::wallet2::payment_details &d = p.second;
+    if (!d.m_coinbase)
+      continue;
+    if (want_height != 0)
+    {
+      if (d.m_block_height == want_height) { best = &d; break; }
+    }
+    else if (best == nullptr || d.m_block_height > best->m_block_height)
+      best = &d;
+  }
+  if (best == nullptr)
+  {
+    if (want_height != 0)
+      fail_msg_writer() << tr("this wallet did not receive the reward of block ") << want_height << tr(" (is the wallet fully synced?)");
+    else
+      fail_msg_writer() << tr("no mined blocks found in this wallet yet (is the wallet fully synced?)");
+    return true;
+  }
+
+  SCOPED_WALLET_UNLOCK();
+
+  try
+  {
+    const std::string address = m_wallet->get_account().get_public_address_str(m_wallet->nettype());
+    cryptonote::address_parse_info info;
+    if (!cryptonote::get_account_address_from_str(info, m_wallet->nettype(), address))
+    {
+      fail_msg_writer() << tr("failed to parse own address");
+      return true;
+    }
+    const std::string sig = m_wallet->get_tx_proof(best->m_tx_hash, info.address, false, "");
+    std::ostringstream line;
+    line << "GROX-MINING-PROOF height=" << best->m_block_height
+         << " address=" << address
+         << " txid=" << epee::string_tools::pod_to_hex(best->m_tx_hash)
+         << " proof=" << sig;
+    const std::string filename = "grox_mining_proof.txt";
+    const bool saved = m_wallet->save_to_file(filename, line.str() + "\n", true);
+    success_msg_writer() << tr("Mining proof for block ") << best->m_block_height << tr(". Copy the whole line below and send it:");
+    message_writer(console_color_white, true) << line.str();
+    if (saved)
+      success_msg_writer() << tr("(also saved to: ") << filename << tr(")");
+    success_msg_writer() << tr("It does not reveal your keys or balance. Never share your 25 words or password.");
+  }
+  catch (const std::exception &e)
+  {
+    fail_msg_writer() << tr("error: ") << e.what();
+  }
+  return true;
+}
+//----------------------------------------------------------------------------------------------------
+bool simple_wallet::check_mining_proof(const std::vector<std::string> &args)
+{
+  if (args.empty())
+  {
+    PRINT_USAGE(USAGE_CHECK_MINING_PROOF);
+    return true;
+  }
+
+  // the line is "GROX-MINING-PROOF height=<h> address=<addr> txid=<txid> proof=<sig>" (key=value parts in any order)
+  std::string height_s, address_s, txid_s, proof_s;
+  for (const std::string &a : args)
+  {
+    const size_t eq = a.find('=');
+    if (eq == std::string::npos)
+      continue;
+    const std::string k = a.substr(0, eq), v = a.substr(eq + 1);
+    if (k == "height") height_s = v;
+    else if (k == "address") address_s = v;
+    else if (k == "txid") txid_s = v;
+    else if (k == "proof") proof_s = v;
+  }
+  uint64_t claimed_height = 0;
+  crypto::hash txid;
+  if (height_s.empty() || address_s.empty() || txid_s.empty() || proof_s.empty()
+      || !epee::string_tools::get_xtype_from_string(claimed_height, height_s)
+      || !epee::string_tools::hex_to_pod(txid_s, txid))
+  {
+    fail_msg_writer() << tr("this is not a complete proof line (needs height=, address=, txid= and proof=)");
+    return true;
+  }
+
+  cryptonote::address_parse_info info;
+  if (!cryptonote::get_account_address_from_str(info, m_wallet->nettype(), address_s))
+  {
+    fail_msg_writer() << tr("failed to parse address");
+    return true;
+  }
+
+  if (!try_connect_to_daemon())
+    return true;
+
+  try
+  {
+    uint64_t received = 0, confirmations = 0, block_height = 0;
+    bool in_pool = false, is_coinbase = false, in_pool2 = false;
+    if (!m_wallet->check_tx_proof(txid, info.address, info.is_subaddress, "", proof_s, received, in_pool, confirmations))
+    {
+      fail_msg_writer() << tr("BAD proof: the signature does not match");
+      return true;
+    }
+    if (received == 0)
+    {
+      fail_msg_writer() << tr("BAD proof: this address received nothing in that transaction");
+      return true;
+    }
+    if (!m_wallet->get_coinbase_info(txid, block_height, is_coinbase, in_pool2))
+    {
+      fail_msg_writer() << tr("could not read the transaction from the node");
+      return true;
+    }
+    if (in_pool || !is_coinbase)
+    {
+      fail_msg_writer() << tr("BAD proof: that transaction is not a mined block reward");
+      return true;
+    }
+    if (block_height != claimed_height)
+    {
+      fail_msg_writer() << tr("BAD proof: the reward is in block ") << block_height << tr(", not block ") << claimed_height;
+      return true;
+    }
+    success_msg_writer() << tr("GOOD mining proof: ") << address_s << tr(" received ") << print_money(received)
+                         << tr(" GROX as the reward of block ") << block_height;
+    if (confirmations != (uint64_t)-1)
+      success_msg_writer() << boost::format(tr("The block has %u confirmations.")) % confirmations;
   }
   catch (const std::exception &e)
   {

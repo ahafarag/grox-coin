@@ -37,6 +37,11 @@ Open **Grox Wallet** from the Start menu or the desktop.
    **60 blocks** (about 1 hour).
 4. **Receive**: copy your address (starts with `G`). **Send**: paste an address and an amount.
 
+**Pool mining (optional):** in the Mining card choose **Pool** instead of **Solo** to mine with
+others on `pool.groxcoin.com` and get paid on every block the pool finds. It needs the Grox XMRig:
+download `xmrig-grox-…-win-x64.zip` from the same release and unzip it inside
+`C:\Users\<you>\Grox`. Add that folder to the Defender exclusions too (see below).
+
 The node (the program that talks to the Grox network) starts by itself. The first time it
 downloads the blockchain, which takes a few minutes; mining starts once it is in sync.
 
@@ -60,11 +65,35 @@ and type the 25 words.
 
 ## Update and uninstall
 
-- **Update**: close Grox Wallet, run the new `GroxWallet-Setup-…exe`. Your wallets and the
-  blockchain stay.
+- **Update**: from v1.2.7 the app checks GitHub and shows a bar when a new version is out. Press
+  **Update now**: it downloads the new setup, checks its SHA256, closes, installs and opens again.
+  (Portable zip: **Download from GitHub**.) Or by hand: close Grox Wallet, run the new
+  `GroxWallet-Setup-…exe`. Your wallets and the blockchain stay. Footer link: **Check for updates**.
 - **Uninstall**: Windows Settings → Apps → **Grox Wallet** → Uninstall. Your wallet files in
   `C:\Users\<you>\Grox` and the blockchain in `C:\ProgramData\grox` are **kept**. Delete
   `C:\ProgramData\grox` yourself to free the disk space.
+
+## Windows Defender (WinError 225)
+
+Defender flags many RandomX programs as "potentially unwanted", including `groxd.exe` and
+`grox-wallet-rpc.exe`, even though they are clean. Signs: **WinError 225** when you open a wallet,
+the node stops by itself, or a file is missing from the app's `bin` folder. Grox mines only when
+you press **Start**; your wallet and the blockchain are not affected.
+
+Fix it once with two folder exclusions:
+
+1. **Windows Security → Virus & threat protection → Manage settings → Exclusions →
+   Add or remove exclusions → Add an exclusion → Folder**.
+2. Add both folders:
+   - `%LOCALAPPDATA%\Programs\Grox Wallet` (the app)
+   - `C:\ProgramData\grox` (the blockchain)
+   - `C:\Users\<you>\Grox` too, if you put XMRig there for pool mining
+3. **Protection history**: for each Grox entry choose **Restore** or **Allow on device**. An entry
+   that already says *Restored* has no button; that is normal.
+4. If a file is still missing from `bin`, run the installer again. Then reopen Grox Wallet.
+
+Add exclusions only for Grox downloaded from the official
+[GitHub releases](https://github.com/ahafarag/grox-coin/releases), with a matching SHA256.
 
 ## Troubleshooting
 
@@ -73,9 +102,9 @@ and type the 25 words.
 | "Windows protected your PC" | **More info** → **Run anyway**. |
 | v1.1.0 setup: "Unable to create the directory …\Documents\Grox" | Fixed in v1.1.1, which no longer uses Documents. Download the latest installer and run it again. |
 | Windows Firewall asks about `groxd.exe` | **Allow** lets other Grox nodes connect to you (helps the network). **Cancel** is fine too: mining still works. |
-| Antivirus deleted or blocked `groxd.exe` | Many antivirus programs flag *every* crypto miner. Grox mines only when you press Start. Restore the file from quarantine and allow it, or reinstall. |
+| **WinError 225**, or antivirus deleted or blocked `groxd.exe` / `grox-wallet-rpc.exe` | Add the two folder exclusions in [Windows Defender](#windows-defender-winerror-225) above, restore the files, then reinstall if one is still missing. Other antivirus programs: allow the same two folders. |
 | The wallet opened in my browser, plus a small "Grox is running" window | Your Windows lacks Microsoft Edge WebView2. The wallet works the same in the browser. To get the normal window, install the [WebView2 Runtime](https://developer.microsoft.com/microsoft-edge/webview2/) from Microsoft. |
-| Node stopped by itself and **Start node** does nothing | Windows Defender may have stopped `groxd.exe` as "potentially unwanted" (it does this to many miners). Open **Windows Security → Virus & threat protection → Protection history**, open the `groxd.exe` entry and choose **Allow on device**. Then press **Start node** again. |
+| Node stopped by itself and **Start node** does nothing | Usually Windows Defender: see [Windows Defender](#windows-defender-winerror-225) above, then press **Start node** again. |
 | "Node offline" for a long time | Press **Start node**. If it stops again, open `C:\ProgramData\grox\grox.log` and look at the last lines. |
 | "Port 8790 is used by another program" | Something else uses that port. Close it, or start the app with `GroxWallet.exe --port 8791`. |
 | Mining shows a low H/s | Normal in the first minute. Computers with less than 4 GB RAM mine in a slower mode. |
@@ -130,6 +159,8 @@ python windows\grox_wallet.py --bin-dir <folder with groxd.exe>
 3. لما تلاقي بلوك، المكافأة بتنزل في محفظتك، وبتتفتح بعد **60 بلوك** (حوالي ساعة).
 4. **الاستلام**: انسخ عنوانك (بيبدأ بـ `G`). **الإرسال**: حط العنوان والمبلغ.
 
+**التعدين في الـ Pool (اختياري):** في كارت التعدين اختار **Pool** بدل **لوحدك** عشان تعدّن مع غيرك على `pool.groxcoin.com` وتاخد نصيبك من كل بلوك الـ Pool يلاقيه. محتاج XMRig بتاع Grox: نزّل `xmrig-grox-…-win-x64.zip` من نفس الإصدار وفكّه جوه `C:\Users\<you>\Grox`، وضيف الفولدر ده كمان لاستثناءات Defender.
+
 الشبكة (groxd) بتشتغل لوحدها. أول مرة بتنزّل البلوكتشين في كام دقيقة، والتعدين بيبدأ بعد ما تخلص.
 
 **لو قفلت الشاشة**، المحفظة بتتحفظ والتعدين والشبكة بيقفوا، ولو التعدين شغال البرنامج هيسألك الأول. عشان تفضل تعدّن، سيب الشاشة مفتوحة (ممكن تصغّرها).
@@ -146,17 +177,33 @@ python windows\grox_wallet.py --bin-dir <folder with groxd.exe>
 
 ### التحديث والحذف
 
-- **التحديث**: اقفل Grox Wallet وشغّل ملف التثبيت الجديد. المحافظ والبلوكتشين بيفضلوا زي ما هم.
+- **التحديث**: من نسخة 1.2.7 البرنامج بيدوّر على GitHub ويظهرلك شريط لما يكون فيه إصدار جديد. دوس **حدّث دلوقتي**: هينزّل ملف التثبيت ويتأكد منه (SHA256) ويقفل ويتسطّب ويفتح تاني. (النسخة المحمولة zip: **نزّل من GitHub**.) أو بإيدك: اقفل Grox Wallet وشغّل ملف التثبيت الجديد. المحافظ والبلوكتشين بيفضلوا زي ما هم.
 - **الحذف**: الإعدادات ← Apps ← **Grox Wallet** ← Uninstall. ملفات المحفظة في `C:\Users\<you>\Grox` والبلوكتشين في `C:\ProgramData\grox` **مش بيتمسحوا**. امسح `C:\ProgramData\grox` بنفسك لو عايز المساحة.
+
+### Windows Defender (رسالة WinError 225)
+
+Defender بيعترض على برامج RandomX كتير على إنها "غير مرغوب فيها"، ومنها `groxd.exe` و `grox-wallet-rpc.exe`، مع إنها سليمة. العلامات: رسالة **WinError 225** وانت بتفتح المحفظة، أو الشبكة بتقف لوحدها، أو ملف ناقص من فولدر `bin`. Grox مبيعدّنش غير لما تدوس ابدأ، والمحفظة والبلوكتشين سليمين.
+
+الحل مرة واحدة بإضافة فولدرين للاستثناءات:
+
+1. **Windows Security ← Virus & threat protection ← Manage settings ← Exclusions ← Add or remove exclusions ← Add an exclusion ← Folder**.
+2. ضيف الفولدرين:
+   - `%LOCALAPPDATA%\Programs\Grox Wallet` (البرنامج)
+   - `C:\ProgramData\grox` (البلوكتشين)
+   - و `C:\Users\<you>\Grox` كمان، لو حطيت فيه XMRig للتعدين في الـ Pool
+3. من **Protection history** اختار **Restore** أو **Allow on device** لأي سطر Grox (لو مكتوب Restored مش هتلاقي زرار، وده عادي).
+4. لو لسه فيه ملف ناقص من `bin`، شغّل ملف التثبيت تاني، وافتح Grox Wallet.
+
+ضيف الاستثناء بس لـ Grox اللي نزّلته من [GitHub releases](https://github.com/ahafarag/grox-coin/releases) الرسمية والـ SHA256 بتاعه مطابق.
 
 ### حل المشاكل
 
 - **Windows protected your PC**: دوس **More info** ثم **Run anyway**.
 - **نسخة 1.1.0 قالت "Unable to create the directory …\Documents\Grox"**: اتصلّحت في 1.1.1 ومبقتش بتستخدم Documents. نزّل آخر نسخة وشغّلها تاني.
 - **الجدار الناري بيسأل عن `groxd.exe`**: **Allow** بيخلي أجهزة Grox التانية تتصل بيك (بيساعد الشبكة)، و**Cancel** برضه ماشي والتعدين هيشتغل.
-- **برنامج الحماية مسح `groxd.exe`**: برامج كتير بتعترض على أي برنامج تعدين. Grox مبيعدّنش غير لما تدوس ابدأ. رجّع الملف من الحجر واسمح بيه، أو ثبّت تاني.
+- **رسالة WinError 225، أو برنامج الحماية مسح `groxd.exe` أو `grox-wallet-rpc.exe`**: ضيف الفولدرين في جزء Windows Defender اللي فوق، رجّع الملفات، ولو فيه ملف لسه ناقص ثبّت تاني. لو عندك برنامج حماية تاني، اسمح لنفس الفولدرين.
 - **المحفظة فتحت في المتصفح ومعاها شاشة صغيرة "Grox is running"**: جهازك ناقصه Microsoft Edge WebView2. المحفظة شغالة عادي في المتصفح، ولو عايز الشاشة العادية ثبّت [WebView2 Runtime](https://developer.microsoft.com/microsoft-edge/webview2/).
-- **الشبكة وقفت لوحدها و"تشغيل الشبكة" مش بيعمل حاجة**: غالباً Windows Defender وقّف `groxd.exe` على إنه "برنامج غير مرغوب فيه" (بيعمل كده مع برامج تعدين كتير). افتح **Windows Security ← Virus & threat protection ← Protection history**، افتح سطر `groxd.exe` واختار **Allow on device**، وبعدين دوس **تشغيل الشبكة** تاني.
+- **الشبكة وقفت لوحدها و"تشغيل الشبكة" مش بيعمل حاجة**: غالباً Windows Defender. شوف جزء Windows Defender اللي فوق، وبعدين دوس **تشغيل الشبكة** تاني.
 - **"الشبكة مقفولة" لفترة طويلة**: دوس **تشغيل الشبكة**. لو وقفت تاني، افتح `C:\ProgramData\grox\grox.log` وبص على آخر السطور.
 
 </div>

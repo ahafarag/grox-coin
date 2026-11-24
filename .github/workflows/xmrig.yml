@@ -80,7 +80,8 @@ jobs:
         run: |
           git config --global core.autocrlf false
           git clone --depth 1 --branch "$XMRIG_TAG" https://github.com/xmrig/xmrig.git xmrig
-          git clone --depth 1 https://github.com/xmrig/xmrig-deps.git xmrig-deps
+          git clone https://github.com/xmrig/xmrig-deps.git xmrig-deps
+          git -C xmrig-deps checkout -q ddfb65ec8bf4803a6c1c2037969546d018c76b54  # pinned: newer libuv needs extra Windows libs
           cd xmrig && git apply ../tools/xmrig/grox-xmrig-6.26.0.patch
 
       - name: Build

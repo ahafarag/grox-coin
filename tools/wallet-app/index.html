@@ -31,7 +31,8 @@
   }
   * { box-sizing: border-box; }
   html, body { margin: 0; background: var(--bg); color: var(--text); font-family: var(--sans); }
-  body { min-height: 100vh; overflow-x: hidden; }
+  html { overflow-x: clip; }
+  body { min-height: 100vh; overflow-x: hidden; overflow-x: clip; }
   button, input, select, textarea { font: inherit; color: inherit; }
   .num { font-family: var(--mono); font-variant-numeric: tabular-nums; direction: ltr; unicode-bidi: isolate; }
   .hidden { display: none !important; }
@@ -198,6 +199,9 @@
   .stat-line { display: flex; justify-content: space-between; border-bottom: 1px dashed var(--line); padding-bottom: 8px; font-size: 15px; gap: 10px; }
   .stat-line span:first-child { color: var(--muted); }
   .threads { display: flex; align-items: center; gap: 8px; }
+  .modes { display: flex; gap: 6px; }
+  .modes button { padding: 5px 12px; border-radius: 8px; border: 1px solid var(--line); background: var(--panel-2); color: var(--muted); cursor: pointer; font: inherit; font-size: 14px; }
+  .modes button.sel { border-color: var(--gold); color: var(--text); font-weight: 600; }
   .threads button { width: 30px; height: 30px; border-radius: 8px; border: 1px solid var(--line); background: var(--panel-2); cursor: pointer; }
   .hashrate { font-size: 32px; font-weight: 700; }
   .hashrate small { font-size: 14px; color: var(--muted); font-weight: 500; }
@@ -215,6 +219,9 @@
   .lock-ic { color: var(--faint); font-size: 12px; }
   .empty { color: var(--faint); padding: 16px 0; }
   .scroll { max-height: 420px; overflow: auto; }
+  .updbar { position: sticky; top: 0; z-index: 55; display: flex; flex-wrap: wrap; gap: 10px; align-items: center; justify-content: center; padding: 10px 16px; background: var(--panel-2); border-bottom: 1px solid var(--gold); font-size: 14px; }
+  .updbar code { background: rgba(0,0,0,.35); padding: 3px 8px; border-radius: 6px; direction: ltr; unicode-bidi: embed; }
+  .updbar .btn { padding: 6px 12px; font-size: 13px; }
   .toast { position: fixed; bottom: 22px; left: 50%; transform: translateX(-50%); background: var(--panel-2); border: 1px solid var(--line); padding: 10px 16px; border-radius: 10px; z-index: 60; font-size: 14px; }
 
   @media (max-width: 900px) {
@@ -237,6 +244,13 @@
 </style>
 </head>
 <body>
+<div class="updbar hidden" id="updBar">
+  <span id="updText"></span>
+  <code class="hidden" id="updCmd">~/grox/update.sh</code>
+  <button class="btn primary hidden" id="updBtn"></button>
+  <a id="updNotes" href="https://github.com/ahafarag/grox-coin/releases/latest" target="_blank" rel="noopener"><span data-en="What's new">إيه الجديد</span></a>
+  <button class="btn" id="updHide">✕</button>
+</div>
 
 <!-- ============================ LANDING ============================ -->
 <div id="landing">
@@ -311,10 +325,14 @@
     <span><span data-en="Never send your 25 words to anyone, not even to us.">الـ25 كلمة بتاعتك متتبعتش لحد، ولا حتى لينا.</span></span>
     <div class="about">
     <span><b>Grox</b> <span class="appVer"></span></span>
+    <a href="#" class="updCheck"><span data-en="Check for updates">دوّر على تحديث</span></a>
     <span><span data-en="Made by Abdelrahman Farag">من تطوير عبدالرحمن فرج</span></span>
     <a href="https://github.com/ahafarag" target="_blank" rel="noopener">GitHub @ahafarag</a>
     <a class="guideLink" href="https://github.com/ahafarag/grox-coin/blob/main/docs/GUIDE.md" target="_blank" rel="noopener"><span data-en="User guide">دليل الاستخدام</span></a>
+    <a href="https://groxcoin.com" target="_blank" rel="noopener"><span data-en="Website">الموقع</span></a>
     <a href="https://explorer.groxcoin.com" target="_blank" rel="noopener"><span data-en="Block explorer">مستكشف البلوكات</span></a>
+    <a href="https://wallet.groxcoin.com" target="_blank" rel="noopener"><span data-en="Web wallet">المحفظة على الويب</span></a>
+    <a href="https://groxcoin.com/whitepaper/" target="_blank" rel="noopener"><span data-en="Whitepaper">الورقة البيضاء</span></a>
     <a href="https://github.com/ahafarag/grox-coin/issues" target="_blank" rel="noopener"><span data-en="Report a problem">بلّغ عن مشكلة</span></a>
   </div>
   </footer>
@@ -353,14 +371,18 @@
         <button class="mine-btn" id="mineBtn"><span data-en="Start">ابدأ</span></button>
         <div class="mine-stats">
           <div class="hashrate"><span class="num" id="hr">0</span> <small class="num">H/s</small></div>
+          <div class="stat-line"><span><span data-en="Mode">الطريقة</span></span>
+            <span class="modes"><button id="mSolo"><span data-en="Solo">لوحدك</span></button><button id="mPool"><span data-en="Pool">Pool</span></button></span></div>
           <div class="stat-line"><span><span data-en="CPU threads">عدد الأنوية</span></span>
             <span class="threads"><button id="tMinus">−</button><span class="num" id="threads">2</span><button id="tPlus">+</button></span></div>
           <div class="stat-line"><span><span data-en="Network difficulty">صعوبة الشبكة</span></span><span class="num" id="diff">—</span></div>
           <div class="stat-line"><span><span data-en="Network hashrate">سرعة الشبكة</span></span><span class="num" id="nethr">—</span></div>
-          <div class="stat-line"><span><span data-en="Expected time per block">متوقع تلاقي بلوك كل</span></span><span id="eta">—</span></div>
+          <div class="stat-line" id="etaLine"><span><span data-en="Expected time per block">متوقع تلاقي بلوك كل</span></span><span id="eta">—</span></div>
+          <div class="stat-line hidden" id="poolLine"><span><span data-en="Pool">الـ Pool</span></span><span class="ltr">pool.groxcoin.com</span></div>
           <div class="stat-line"><span><span data-en="Block reward">مكافأة البلوك</span></span><span><span class="num" id="reward">—</span> GROX</span></div>
         </div>
       </div>
+      <p class="hint" id="modeHint"></p>
       <div class="msg" id="mineMsg"></div>
     </section>
 
@@ -381,6 +403,7 @@
       <div class="sub" style="margin-top:0"><span data-en="Share this address to receive GROX. The address is safe to share; your 25 words never are.">ابعت العنوان ده لأي حد عايز يحوّلك GROX. العنوان آمن تشاركه، إنما الـ25 كلمة لأ.</span></div>
       <div class="addr-row"><div class="addr" id="addr2">—</div><button class="btn" id="copyBtn2"><span data-en="Copy">نسخ</span></button></div>
       <div style="margin-top:14px"><button class="linkbtn" data-open="board">🏆 <span data-en="Put your name on the blocks-found leaderboard">حط اسمك على لوحة أبطال البلوكات</span></button></div>
+      <div style="margin-top:8px"><button class="linkbtn" data-open="proof">⛏ <span data-en="Prove you mined a block (one click)">أثبت إنك لقيت بلوك (بضغطة واحدة)</span></button></div>
     </section>
 
     <section class="card span2">
@@ -397,10 +420,14 @@
   <footer>
     <div class="about">
     <span><b>Grox</b> <span class="appVer"></span></span>
+    <a href="#" class="updCheck"><span data-en="Check for updates">دوّر على تحديث</span></a>
     <span><span data-en="Made by Abdelrahman Farag">من تطوير عبدالرحمن فرج</span></span>
     <a href="https://github.com/ahafarag" target="_blank" rel="noopener">GitHub @ahafarag</a>
     <a class="guideLink" href="https://github.com/ahafarag/grox-coin/blob/main/docs/GUIDE.md" target="_blank" rel="noopener"><span data-en="User guide">دليل الاستخدام</span></a>
+    <a href="https://groxcoin.com" target="_blank" rel="noopener"><span data-en="Website">الموقع</span></a>
     <a href="https://explorer.groxcoin.com" target="_blank" rel="noopener"><span data-en="Block explorer">مستكشف البلوكات</span></a>
+    <a href="https://wallet.groxcoin.com" target="_blank" rel="noopener"><span data-en="Web wallet">المحفظة على الويب</span></a>
+    <a href="https://groxcoin.com/whitepaper/" target="_blank" rel="noopener"><span data-en="Whitepaper">الورقة البيضاء</span></a>
     <a href="https://github.com/ahafarag/grox-coin/issues" target="_blank" rel="noopener"><span data-en="Report a problem">بلّغ عن مشكلة</span></a>
   </div>
   </footer>
@@ -434,6 +461,26 @@
         <button class="btn primary" id="seedDone" disabled><span data-en="Done, continue">تمام، كمّل</span></button>
       </div>
     </div>
+  </div>
+</div>
+
+<div class="modal-bg hidden" id="mProof">
+  <div class="modal">
+    <h2><span data-en="Mining proof">إثبات التعدين</span></h2>
+    <p class="hint"><span data-en="Made a block and need to prove it (for a bounty or the first-block reward)? Press the button, copy the line and send it in a private message. It never contains your keys or balance.">لقيت بلوك وعايز تثبته (للمكافأة أو جايزة أول بلوك)؟ دوس الزرار وانسخ السطر وابعته في رسالة خاصة. مفيهوش مفاتيحك ولا رصيدك.</span></p>
+    <div class="modal-actions"><button class="btn primary" id="pMake"><span data-en="Make my mining proof">جهّز إثبات التعدين</span></button></div>
+    <div class="hidden" id="pOut" style="margin-top:16px">
+      <textarea id="pText" class="ltr" readonly rows="5" style="width:100%;font-family:var(--mono);font-size:12px"></textarea>
+      <div class="modal-actions"><button class="btn" id="pCopy"><span data-en="Copy">نسخ</span></button></div>
+      <div class="warn" style="margin-top:14px">🔒 <span data-en="Send this only in a private message. Never send your 25 words or password to anyone.">ابعته في رسالة خاصة بس. الـ25 كلمة وكلمة السر متتبعتش لأي حد.</span></div>
+    </div>
+    <div class="msg" id="pMsg"></div>
+    <hr style="border:0;border-top:1px solid var(--line,#2a2a2a);margin:18px 0">
+    <h2 style="font-size:16px"><span data-en="Check someone's proof">اتأكد من إثبات حد</span></h2>
+    <textarea id="pCheck" class="ltr" rows="3" placeholder="GROX-MINING-PROOF height=… address=… txid=… proof=…" style="width:100%;font-family:var(--mono);font-size:12px"></textarea>
+    <div class="modal-actions"><button class="btn" id="pVerify"><span data-en="Check">تحقق</span></button></div>
+    <div class="msg" id="pCheckMsg"></div>
+    <div class="modal-actions"><button class="btn ghost" data-close><span data-en="Close">إغلاق</span></button></div>
   </div>
 </div>
 
@@ -506,6 +553,8 @@ function lsSet(k, v) { try { localStorage.setItem(k, v); } catch (e) {} }
 /* ---------------- language ---------------- */
 let LANG = lsGet('grox.lang') || ((navigator.language || '').toLowerCase().startsWith('ar') ? 'ar' : 'en');
 function L(ar, en) { return LANG === 'ar' ? ar : en; }
+// up to 8 decimals without trailing zeros (small pool payouts stay visible)
+function amt(v) { const t = Number(v).toFixed(8).replace(/0+$/, '').replace(/\.$/, ''); return t === '' ? '0' : t; }
 function applyLang() {
   document.documentElement.lang = LANG; document.documentElement.dir = LANG === 'ar' ? 'rtl' : 'ltr';
   document.querySelectorAll('[data-en]').forEach(el => {
@@ -515,6 +564,7 @@ function applyLang() {
   document.querySelectorAll('.langbtn').forEach(b => b.textContent = LANG === 'ar' ? 'English' : 'عربي');
   document.title = L('Grox | عدّن من جهازك', 'Grox | Mine from your computer');
   renderAbout(state);
+  if (typeof renderUpdate === 'function' && upd) renderUpdate();
   if (state) { renderLanding(state); if (!$('dash').classList.contains('hidden')) renderDash(state); }
 }
 function renderAbout(s) {
@@ -543,13 +593,14 @@ function setMsg(id, text, kind) { const m = $(id); m.className = 'msg' + (kind ?
 /* ---------------- screens & modals ---------------- */
 function showDash() { $('landing').classList.add('hidden'); $('dash').classList.remove('hidden'); window.scrollTo(0, 0); }
 function showLanding() { $('dash').classList.add('hidden'); $('landing').classList.remove('hidden'); }
-const modals = { create: 'mCreate', open: 'mOpen', restore: 'mRestore', board: 'mBoard' };
+const modals = { create: 'mCreate', open: 'mOpen', restore: 'mRestore', board: 'mBoard', proof: 'mProof' };
 function closeModals() { Object.values(modals).forEach(id => $(id).classList.add('hidden')); }
 function openModal(which) {
   closeModals();
   if (which === 'open' && wallets.length === 0) which = 'create';
   if (which === 'create') { $('createStep1').classList.remove('hidden'); $('createStep2').classList.add('hidden'); setMsg('cMsg'); }
   if (which === 'open') { fillWallets(); setMsg('oMsg'); }
+  if (which === 'proof') { $('pOut').classList.add('hidden'); $('pText').value = ''; $('pCheck').value = ''; setMsg('pMsg'); setMsg('pCheckMsg'); }
   if (which === 'board') { $('bOut').classList.add('hidden'); $('bText').value = ''; setMsg('bMsg'); }
   $(modals[which]).classList.remove('hidden');
   const first = $(modals[which]).querySelector('input, textarea, select'); if (first) setTimeout(() => first.focus(), 50);
@@ -634,9 +685,26 @@ $('tMinus').onclick = () => setThreads(threads - 1);
 $('tPlus').onclick = () => setThreads(threads + 1);
 setThreads(threads);
 
+let mode = lsGet('grox.mode') === 'pool' ? 'pool' : 'solo';
+function modeHint() {
+  const ready = !state || state.pool_ready;
+  $('modeHint').textContent = mode === 'pool'
+    ? (ready ? L('Pool: بتعدّن مع غيرك على pool.groxcoin.com، وكل بلوك الـ Pool يلاقيه بيدفعلك نصيبك على عنوانك مباشرة. من غير رسوم.', 'Pool: you mine together with others on pool.groxcoin.com. Every block the pool finds pays your share straight to your address. No fee.')
+             : L('الـ Pool محتاج XMRig بتاع Grox: نزّل xmrig-grox من صفحة الإصدارات وفكّه جوه فولدر المحافظ.', 'Pool mode needs the Grox XMRig: download xmrig-grox from the releases page and unzip it inside your wallet folder.'))
+    : L('لوحدك: جهازك بيدوّر على البلوك كله، ولما تلاقيه المكافأة كلها ليك.', 'Solo: your computer looks for whole blocks; when you find one, the full reward is yours.');
+}
+function setMode(m) {
+  mode = m; lsSet('grox.mode', m);
+  $('mSolo').classList.toggle('sel', m === 'solo'); $('mPool').classList.toggle('sel', m === 'pool');
+  modeHint();
+}
+$('mSolo').onclick = () => { if (!(state && state.mining && state.mining.active)) setMode('solo'); };
+$('mPool').onclick = () => { if (!(state && state.mining && state.mining.active)) setMode('pool'); };
+setMode(mode);
+
 async function startMining() {
   setMsg('mineMsg', L('بنشغّل التعدين… أول دقيقة بيجهّز الذاكرة، وبعدها السرعة تطلع', 'Starting the miner… the first minute prepares memory, then the speed goes up'));
-  try { await api('/api/mining', { action: 'start', threads }); setMsg('mineMsg', L('التعدين شغال ⛏ سيب الجهاز يشتغل', 'Mining ⛏ leave your computer running'), 'ok'); }
+  try { await api('/api/mining', { action: 'start', threads, mode }); setMsg('mineMsg', L('التعدين شغال ⛏ سيب الجهاز يشتغل', 'Mining ⛏ leave your computer running'), 'ok'); }
   catch (e) { setMsg('mineMsg', e.message, e.message.includes('Already') ? 'ok' : 'err'); }
   setTimeout(refresh, 1500);
 }
@@ -658,6 +726,25 @@ $('bMake').onclick = async () => {
     $('bText').value = `/register ${nick} ${r.address} ${r.view_key}`;
     $('bOut').classList.remove('hidden'); setMsg('bMsg');
   } catch (e) { setMsg('bMsg', e.message, 'err'); }
+};
+$('pMake').onclick = async () => {
+  setMsg('pMsg', L('بنجهّز الإثبات…', 'Making the proof…')); $('pMake').disabled = true;
+  try {
+    const r = await api('/api/miningproof', {});
+    $('pText').value = r.line; $('pOut').classList.remove('hidden');
+    setMsg('pMsg', L(`إثبات البلوك #${r.height}. انسخ السطر كله وابعته.`, `Proof for block #${r.height}. Copy the whole line and send it.`), 'ok');
+  } catch (e) { setMsg('pMsg', e.message, 'err'); }
+  $('pMake').disabled = false;
+};
+$('pCopy').onclick = () => navigator.clipboard.writeText($('pText').value).then(() => toast(L('اتنسخ الإثبات', 'Proof copied')), () => toast(L('النسخ منفعش', 'Copy failed')));
+$('pVerify').onclick = async () => {
+  setMsg('pCheckMsg', L('بنتحقق…', 'Checking…')); $('pVerify').disabled = true;
+  try {
+    const r = await api('/api/checkproof', { line: $('pCheck').value });
+    if (r.valid) setMsg('pCheckMsg', L(`إثبات صحيح ✔ ${r.address.slice(0, 8)}… استلم ${fmt(r.received, 8)} GROX مكافأة البلوك #${r.height}`, `Valid ✔ ${r.address.slice(0, 8)}… received ${fmt(r.received, 8)} GROX as the reward of block #${r.height}`), 'ok');
+    else setMsg('pCheckMsg', L('إثبات غير صحيح: ', 'Not valid: ') + r.reason, 'err');
+  } catch (e) { setMsg('pCheckMsg', e.message, 'err'); }
+  $('pVerify').disabled = false;
 };
 $('bCopy').onclick = () => navigator.clipboard.writeText($('bText').value).then(() => toast(L('اتنسخت الرسالة', 'Message copied')), () => toast(L('النسخ منفعش', 'Copy failed')));
 $('maxBtn').onclick = () => { if (state && state.wallet) $('sAmt').value = Math.max(0, state.wallet.unlocked - 0.01).toFixed(8); };
@@ -714,6 +801,9 @@ function renderDash(s) {
   $('mineBtn').classList.toggle('on', on); $('mineBtn').textContent = on ? L('شغال ⛏', 'MINING ⛏') : L('ابدأ', 'START');
   $('hr').textContent = fmt(on ? mi.speed : 0, 0);
   if (on && mi.threads) $('threads').textContent = mi.threads;
+  if (on && mi.mode && mi.mode !== mode) setMode(mi.mode);
+  modeHint();
+  $('etaLine').classList.toggle('hidden', mode === 'pool'); $('poolLine').classList.toggle('hidden', mode !== 'pool');
   $('eta').textContent = on && mi.speed && n ? dur(n.difficulty / mi.speed) : '—';
 
   const w = s.wallet;
@@ -732,7 +822,7 @@ function renderDash(s) {
       <td><span class="tag ${h.kind}">${label[h.kind] || h.kind}</span> ${h.locked ? '<span class="lock-ic">' + L('مقفول مؤقتاً', 'locked') + '</span>' : ''}</td>
       <td class="num">${h.height ? h.height.toLocaleString('en-US') : '—'}</td>
       <td>${ago(h.time)}</td>
-      <td class="e num" style="color:${h.kind === 'out' ? 'var(--red)' : 'var(--text)'}">${h.kind === 'out' ? '−' : '+'}${Number(h.amount).toFixed(6)}</td></tr>`).join('');
+      <td class="e num" style="color:${h.kind === 'out' ? 'var(--red)' : 'var(--text)'}">${h.kind === 'out' ? '−' : '+'}${amt(h.amount)}</td></tr>`).join('');
     $('histEmpty').classList.toggle('hidden', w.history.length > 0);
   } else if (w && w.error) {
     $('hist').innerHTML = ''; $('histEmpty').classList.remove('hidden'); $('histEmpty').textContent = L('المحفظة: ', 'Wallet: ') + w.error;
@@ -746,6 +836,47 @@ async function refresh() {
   busy = false;
 }
 
+/* ---------------- updates ---------------- */
+let upd = null;
+function renderUpdate() {
+  const bar = $('updBar');
+  if (!upd || !upd.available || lsGet('grox.updHide') === upd.latest) { bar.classList.add('hidden'); return; }
+  const linux = !(upd.os === 'windows');
+  $('updText').textContent = L('فيه إصدار جديد من Grox: v' + upd.latest + ' (عندك v' + upd.current + ')' + (linux ? '. اقفل المحفظة وشغّل:' : ''),
+                               'Grox v' + upd.latest + ' is available (you have v' + upd.current + ')' + (linux ? '. Close the wallet, then run:' : ''));
+  const btn = $('updBtn'), cmd = $('updCmd');
+  cmd.classList.add('hidden'); btn.classList.remove('hidden');
+  if (upd.os === 'windows' && upd.auto) btn.textContent = L('حدّث دلوقتي', 'Update now');
+  else if (upd.os === 'windows') btn.textContent = L('نزّل من GitHub', 'Download from GitHub');
+  else { btn.textContent = L('انسخ الأمر', 'Copy command'); cmd.classList.remove('hidden'); }
+  bar.classList.remove('hidden');
+}
+async function checkUpdate(force) {
+  try { upd = await api('/api/update', force ? { force: true } : null); }
+  catch (e) { if (force) toast(e.message); return; }
+  if (force) {
+    if (upd.offline) toast(L('مقدرناش نوصل لـ GitHub دلوقتي', 'Could not reach GitHub to check for updates'));
+    else if (!upd.available) toast(L('عندك آخر إصدار (v' + upd.current + ')', 'You have the latest version (v' + upd.current + ')'));
+    lsSet('grox.updHide', '');
+  }
+  renderUpdate();
+}
+$('updHide').onclick = () => { if (upd) lsSet('grox.updHide', upd.latest); $('updBar').classList.add('hidden'); };
+document.querySelectorAll('.updCheck').forEach(a => a.onclick = e => { e.preventDefault(); checkUpdate(true); });
+$('updBtn').onclick = async () => {
+  if (!upd) return;
+  if (upd.os !== 'windows') {
+    navigator.clipboard.writeText('~/grox/update.sh').then(() => toast(L('اتنسخ الأمر', 'Command copied')), () => toast(L('النسخ منفعش', 'Copy failed')));
+    return;
+  }
+  if (!upd.auto) { window.open(upd.page, '_blank', 'noopener'); return; }
+  if (!confirm(L('هننزّل v' + upd.latest + ' ونتأكد منه (SHA256)، وبعدين المحفظة والتعدين هيقفلوا والتحديث يتسطّب ويفتح لوحده. محافظك والبلوك تشين مش هيتأثروا. نكمل؟',
+                 'Grox Wallet will download v' + upd.latest + ', check it (SHA256), then close (mining stops), install the update and open again. Your wallets and the blockchain are kept. Continue?'))) return;
+  const b = $('updBtn'); b.disabled = true; b.textContent = L('بننزّل…', 'Downloading…');
+  try { await api('/api/update/install', {}); b.textContent = L('بيتسطّب…', 'Installing…'); toast(L('المحفظة هتقفل وتفتح تاني بعد التحديث', 'The wallet will close and reopen after the update')); }
+  catch (e) { b.disabled = false; renderUpdate(); toast(e.message); }
+};
+
 (async () => {
   document.querySelectorAll('.langbtn').forEach(b => b.onclick = toggleLang);
   applyLang();
@@ -753,6 +884,8 @@ async function refresh() {
   if (walletOpen) showDash();
   refresh();
   setInterval(refresh, 5000);
+  setTimeout(() => checkUpdate(false), 3000);
+  setInterval(() => checkUpdate(false), 6 * 3600 * 1000);
 })();
 </script>
 </body>

@@ -13,6 +13,7 @@ import decimal
 import glob
 import json
 import os
+import re
 import secrets
 import shlex
 import socket
@@ -154,6 +155,9 @@ class Config:
         # random credentials so no other local program can use the wallet RPC
         self.rpc_user = "grox"
         self.rpc_pass = secrets.token_hex(16)
+        self.xmrig = getattr(args, "xmrig", None)
+        self.xmrig_api_port = self.wallet_rpc_port + 3  # XMRig read-only stats API (pool mode)
+        self.xmrig_token = secrets.token_hex(16)
 
     @property
     def wallet_rpc(self):
@@ -163,7 +167,7 @@ class Config:
 CFG = None
 LOCK = threading.Lock()
 NODE_LOCK = threading.Lock()
-STATE = {"wallet_proc": None, "wallet_file": None, "node_proc": None}
+STATE = {"wallet_proc": None, "wallet_file": None, "node_proc": None, "xmrig_proc": None, "xmrig_threads": 0}
 QUIT = threading.Event()  # set by POST /api/quit (used by the desktop app / tests)
 _JOB = []
 
@@ -207,9 +211,19 @@ def _kill_with_us(proc):
         pass
 
 
+DEFENDER_HELP = "https://github.com/ahafarag/grox-coin/blob/main/docs/WINDOWS.md#windows-defender-winerror-225"
+DEFENDER_MSG = "ويندوز (Defender) منع برنامج من برامج Grox. ضيف فولدر البرنامج وفولدر البلوكتشين للاستثناءات، الخطوات هنا: "
+
+
 def _spawn(cmd):
     kw = {"creationflags": CREATE_NO_WINDOW} if IS_WIN else {}
-    p = subprocess.Popen(cmd, stdin=subprocess.DEVNULL, stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL, **kw)
+    try:
+        p = subprocess.Popen(cmd, stdin=subprocess.DEVNULL, stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL, **kw)
+    except OSError as e:
+        # WinError 225: Defender blocked the file; a missing exe usually means Defender removed it
+        if IS_WIN and (getattr(e, "winerror", None) == 225 or isinstance(e, FileNotFoundError)):
+            raise RpcError(DEFENDER_MSG + DEFENDER_HELP)
+        raise
     _kill_with_us(p)
     return p
 
@@ -317,7 +331,7 @@ def start_wallet_rpc():
     if CFG.regtest:  # regtest turns on every fork at height 1, mainnet wallets expect v16 from height 2
         cmd.append("--allow-mismatched-daemon-version")
     if not os.path.exists(exe):
-        raise RpcError(f"grox-wallet-rpc{EXE} is missing from {CFG.bin_dir}. Reinstall Grox.")
+        raise RpcError(DEFENDER_MSG + DEFENDER_HELP if IS_WIN else f"grox-wallet-rpc{EXE} is missing from {CFG.bin_dir}. Reinstall Grox.")
     STATE["wallet_proc"] = _spawn(cmd)
     for _ in range(120):
         if wallet_rpc_up():
@@ -474,7 +488,7 @@ def api_state(_body):
         }
         ms = daemon_other("mining_status")
         out["mining"] = {"active": ms.get("active", False), "speed": ms.get("speed", 0),
-                         "threads": ms.get("threads_count", 0), "address": ms.get("address", "")}
+                         "threads": ms.get("threads_count", 0), "address": ms.get("address", ""), "mode": "solo"}
         try:
             last = daemon_json("get_last_block_header")["block_header"]
             out["node"]["last_block_time"] = last["timestamp"]
@@ -483,6 +497,10 @@ def api_state(_body):
             pass
     except Exception:
         pass
+    if xmrig_running():
+        out["mining"] = {"active": True, "speed": xmrig_speed(), "threads": STATE["xmrig_threads"],
+                         "address": "", "mode": "pool", "pool": POOL}
+    out["pool_ready"] = bool(find_xmrig())
 
     if STATE["wallet_file"] and wallet_rpc_up():
         try:
@@ -494,7 +512,7 @@ def api_state(_body):
             addr = wallet("get_address", {"account_index": 0})["address"]
             height = wallet("get_height")["height"]
             tr = wallet("get_transfers", {"in": True, "out": True, "pending": True, "pool": True, "failed": False})
-            is_dev = addr.startswith("G9FE1jSUU5SM3STv3PEx2kVYv5xeB5KyFh385Xgwwi9TBVBSQo6SqX7hzn4g17aJkWHhgSgnzYqgJggp2uJpHoNR13CzeqC")
+            is_dev = addr.startswith(DEV_ADDR)
             items = []
             blocks_found = 0
             mined_total = 0
@@ -542,15 +560,171 @@ def api_state(_body):
     return out
 
 
+POOL = "pool.groxcoin.com:3333"
+XMRIG_DOWNLOAD = "https://github.com/ahafarag/grox-coin/releases/latest"
+
+
+def find_xmrig():
+    """XMRig with rx/grox: --xmrig, next to groxd, or unzipped into the wallet folder."""
+    name = "xmrig" + EXE
+    cands = [CFG.xmrig] if CFG.xmrig else []
+    cands.append(os.path.join(CFG.bin_dir, name))
+    try:
+        for d in sorted(os.listdir(CFG.wallet_dir)):
+            if d.lower().startswith("xmrig"):
+                cands += [os.path.join(CFG.wallet_dir, d, name), os.path.join(CFG.wallet_dir, d)]
+    except OSError:
+        pass
+    for c in cands:
+        if c and os.path.isfile(c) and os.path.basename(c).lower() == name:
+            return c
+    return None
+
+
+def xmrig_running():
+    p = STATE["xmrig_proc"]
+    return p is not None and p.poll() is None
+
+
+def xmrig_speed():
+    import http.client
+    try:  # direct local connection (no system proxy)
+        conn = http.client.HTTPConnection("127.0.0.1", CFG.xmrig_api_port, timeout=2)
+        try:
+            conn.request("GET", "/2/summary", headers={"Authorization": "Bearer " + CFG.xmrig_token})
+            hr = json.loads(conn.getresponse().read().decode()).get("hashrate", {}).get("total", [])
+        finally:
+            conn.close()
+        return next((x for x in hr if x), 0) or 0
+    except Exception:
+        return 0
+
+
+def stop_xmrig():
+    p = STATE["xmrig_proc"]
+    STATE["xmrig_proc"] = None
+    if p is None or p.poll() is not None:
+        return
+    p.terminate()
+    try:
+        p.wait(timeout=10)
+    except subprocess.TimeoutExpired:
+        p.kill()
+
+
+def start_pool_mining(addr, threads):
+    exe = find_xmrig()
+    if not exe:
+        raise RpcError("التعدين في الـ Pool محتاج XMRig بتاع Grox. نزّله من هنا وفكّه جوه فولدر المحافظ: " + XMRIG_DOWNLOAD)
+    stop_xmrig()
+    try:
+        daemon_other("stop_mining")  # one miner at a time
+    except Exception:
+        pass
+    log = os.path.join(CFG.log_dir, "xmrig.log")
+    cmd = [exe, "-o", POOL, "-a", "rx/grox", "-u", addr, "-t", str(threads), "--no-color",
+           "--http-host", "127.0.0.1", "--http-port", str(CFG.xmrig_api_port),
+           "--http-access-token", CFG.xmrig_token, "--log-file", arg_path(log)]
+    STATE["xmrig_proc"] = _spawn(cmd)
+    STATE["xmrig_threads"] = threads
+    time.sleep(1.5)
+    if not xmrig_running():
+        STATE["xmrig_proc"] = None
+        raise RpcError("XMRig مشتغلش. التفاصيل في: " + log)
+DEV_ADDR = "G9FE1jSUU5SM3STv3PEx2kVYv5xeB5KyFh385Xgwwi9TBVBSQo6SqX7hzn4g17aJkWHhgSgnzYqgJggp2uJpHoNR13CzeqC"
+
+
+def api_miningproof(body):
+    """One click: a single line that proves this wallet mined a block (no keys or balance revealed)."""
+    if not STATE["wallet_file"]:
+        raise RpcError("المحفظة مقفولة")
+    try:
+        wallet("refresh", timeout=120)
+    except Exception:
+        pass
+    addr = wallet("get_address", {"account_index": 0})["address"]
+    is_dev = addr.startswith(DEV_ADDR)
+    tr = wallet("get_transfers", {"in": True, "pool": False})
+    want = int(body.get("height") or 0)
+    best = None
+    for t in tr.get("in", []):
+        if t.get("type") != "block":
+            continue
+        amounts = t.get("amounts") or [t.get("amount", 0)]
+        if is_dev and len(amounts) < 2:  # the dev wallet gets 1 output in every block; 2 means it mined it
+            continue
+        h = t.get("height", 0)
+        if want:
+            if h == want:
+                best = t
+                break
+        elif best is None or h > best.get("height", 0):
+            best = t
+    if best is None:
+        raise RpcError("No mined block in this wallet yet. Keep mining and let the wallet finish syncing."
+                       if not want else "This wallet did not receive the reward of block %d" % want)
+    txid = best["txid"]
+    sig = wallet("get_tx_proof", {"txid": txid, "address": addr, "message": ""}, timeout=120)["signature"]
+    line = "GROX-MINING-PROOF height=%d address=%s txid=%s proof=%s" % (best["height"], addr, txid, sig)
+    return {"line": line, "height": best["height"], "txid": txid, "amount": best.get("amount", 0) / ATOMIC}
+
+
+def api_checkproof(body):
+    """Check a line made by api_miningproof / the CLI mining_proof command."""
+    if not STATE["wallet_file"]:
+        raise RpcError("المحفظة مقفولة")
+    text = str(body.get("line", ""))
+    f = {}
+    for key in ("height", "address", "txid", "proof"):
+        m = re.search(r"\b" + key + r"=(\S+)", text)
+        if m:
+            f[key] = m.group(1)
+    if len(f) != 4 or not f["height"].isdigit():
+        raise RpcError("This is not a complete proof line (needs height=, address=, txid= and proof=)")
+    r = wallet("check_tx_proof", {"txid": f["txid"], "address": f["address"], "message": "", "signature": f["proof"]},
+               timeout=120)
+    if not r.get("good"):
+        return {"valid": False, "reason": "The signature does not match"}
+    if not r.get("received"):
+        return {"valid": False, "reason": "This address received nothing in that transaction"}
+    tx = daemon_other("get_transactions", {"txs_hashes": [f["txid"]], "decode_as_json": True})
+    txs = tx.get("txs") or []
+    if len(txs) != 1 or txs[0].get("in_pool"):
+        return {"valid": False, "reason": "The transaction is not in the blockchain"}
+    try:
+        is_coinbase = "gen" in (json.loads(txs[0]["as_json"]).get("vin") or [{}])[0]
+    except Exception:
+        is_coinbase = False
+    if not is_coinbase:
+        return {"valid": False, "reason": "That transaction is not a mined block reward"}
+    if txs[0].get("block_height") != int(f["height"]):
+        return {"valid": False, "reason": "The reward is in block %s, not block %s" % (txs[0].get("block_height"), f["height"])}
+    return {"valid": True, "height": int(f["height"]), "address": f["address"],
+            "received": r["received"] / ATOMIC, "confirmations": r.get("confirmations", 0)}
+
+
 def api_mining(body):
     action = body.get("action")
     if action == "stop":
-        r = daemon_other("stop_mining")
+        was_pool = xmrig_running()
+        stop_xmrig()
+        try:
+            r = daemon_other("stop_mining")
+        except Exception:
+            if not was_pool:
+                raise
+            r = {"status": "OK"}
+        if was_pool:
+            r = {"status": "OK"}
     elif action == "start":
         if not STATE["wallet_file"]:
             raise RpcError("افتح محفظتك الأول، المكافآت بتروح على عنوانها")
         addr = wallet("get_address", {"account_index": 0})["address"]
         threads = max(1, min(int(body.get("threads", 2)), os.cpu_count() or 64))
+        if body.get("mode") == "pool":
+            start_pool_mining(addr, threads)
+            return {"ok": True}
+        stop_xmrig()
         r = daemon_other("start_mining", {"miner_address": addr, "threads_count": threads,
                                            "do_background_mining": False, "ignore_battery": True})
     else:
@@ -593,7 +767,7 @@ def api_node_start(_body):
             return {"ok": True, "already": True}
         exe = os.path.join(CFG.bin_dir, "groxd" + EXE)
         if not os.path.exists(exe):
-            raise RpcError(f"groxd{EXE} is missing from {CFG.bin_dir}. Reinstall Grox.")
+            raise RpcError(DEFENDER_MSG + DEFENDER_HELP if IS_WIN else f"groxd{EXE} is missing from {CFG.bin_dir}. Reinstall Grox.")
         args = ["--non-interactive"] + CFG.node_args
         if CFG.testnet:
             args.append("--testnet")
@@ -623,7 +797,112 @@ def api_quit(_body):
     return {"ok": True}
 
 
+# ---- updates -------------------------------------------------------------
+RELEASES_API = "https://api.github.com/repos/ahafarag/grox-coin/releases/latest"
+RELEASES_PAGE = "https://github.com/ahafarag/grox-coin/releases/latest"
+UPDATE = {"checked": 0.0, "info": None, "installing": False}
+
+
+def _vtuple(v):
+    out = []
+    for part in str(v).lstrip("vV").split("-")[0].split("."):
+        try:
+            out.append(int(part))
+        except ValueError:
+            out.append(0)
+    return tuple(out + [0] * (3 - len(out)))
+
+
+def _http_get(url, timeout=15):
+    req = urllib.request.Request(url, headers={"User-Agent": "GroxWallet/" + (APP_VERSION or "dev"),
+                                               "Accept": "application/vnd.github+json"})
+    with urllib.request.urlopen(req, timeout=timeout) as r:
+        return r.read()
+
+
+def _installed_copy():
+    """Windows: True when GroxWallet.exe was installed by the setup (not the portable zip)."""
+    if not (IS_WIN and getattr(sys, "frozen", False)):
+        return False
+    return os.path.exists(os.path.join(os.path.dirname(sys.executable), "unins000.exe"))
+
+
+def update_info(force=False):
+    """Latest release on GitHub vs this app. Cached for 6 hours."""
+    if not force and UPDATE["info"] and time.time() - UPDATE["checked"] < 6 * 3600:
+        return UPDATE["info"]
+    info = {"current": APP_VERSION, "latest": None, "available": False, "page": RELEASES_PAGE,
+            "auto": _installed_copy(), "os": "windows" if IS_WIN else "linux"}
+    try:
+        rel = json.loads(_http_get(RELEASES_API).decode())
+        tag = rel.get("tag_name", "")
+        info["latest"] = tag.lstrip("vV")
+        info["page"] = rel.get("html_url") or RELEASES_PAGE
+        info["available"] = bool(APP_VERSION) and _vtuple(tag) > _vtuple(APP_VERSION)
+        assets = {a.get("name"): a.get("browser_download_url") for a in rel.get("assets", [])}
+        setup = next((n for n in assets if n.startswith("GroxWallet-Setup-") and n.endswith(".exe")), None)
+        if setup and assets.get(setup + ".sha256"):
+            info["setup"] = {"name": setup, "url": assets[setup], "sha256_url": assets[setup + ".sha256"]}
+        else:
+            info["auto"] = False
+    except Exception as e:
+        info["offline"] = True
+        pass
+    UPDATE["info"], UPDATE["checked"] = info, time.time()
+    return info
+
+
+def api_update(body):
+    return update_info(force=bool((body or {}).get("force")))
+
+
+def api_update_install(_body):
+    """Windows installed copy: download the new setup, check its SHA256, close the app, run the setup,
+    then start the new Grox Wallet. Wallet files and the blockchain are not touched."""
+    import hashlib
+    import subprocess
+    import tempfile
+    info = update_info(force=True)
+    if not (IS_WIN and info.get("available") and info.get("auto") and info.get("setup")):
+        return {"error": "Automatic update is not available here. Download the new version from GitHub.",
+                "page": info.get("page", RELEASES_PAGE)}
+    if UPDATE["installing"]:
+        return {"error": "The update is already being installed."}
+    UPDATE["installing"] = True
+    try:
+        s = info["setup"]
+        d = os.path.join(tempfile.gettempdir(), "grox-update")
+        os.makedirs(d, exist_ok=True)
+        exe = os.path.join(d, s["name"])
+        data = _http_get(s["url"], timeout=300)
+        want = _http_get(s["sha256_url"]).decode().split()[0].strip().lower()
+        if hashlib.sha256(data).hexdigest().lower() != want:
+            raise RuntimeError("Checksum mismatch: the download is damaged or was changed. Nothing was installed.")
+        with open(exe, "wb") as f:
+            f.write(data)
+        pids = [os.getpid()]
+        p = STATE.get("node_proc")
+        if p is not None and p.poll() is None:
+            pids.append(p.pid)
+        app = sys.executable
+        q = lambda s: s.replace("'", "''")  # PowerShell single-quoted string
+        ps = ("$ErrorActionPreference='SilentlyContinue'; "
+              f"Wait-Process -Id {','.join(str(x) for x in pids)} -Timeout 180; "
+              f"Start-Process -FilePath '{q(exe)}' -ArgumentList '/SILENT','/SUPPRESSMSGBOXES','/NORESTART' -Wait; "
+              f"Start-Process -FilePath '{q(app)}'")
+        subprocess.Popen(["powershell", "-NoProfile", "-ExecutionPolicy", "Bypass", "-WindowStyle", "Hidden",
+                          "-Command", ps], creationflags=CREATE_NO_WINDOW | 0x00000008)  # DETACHED_PROCESS
+    except Exception as e:
+        UPDATE["installing"] = False
+        return {"error": str(e) if isinstance(e, RuntimeError) else "Download failed. Check your internet and try again.",
+                "page": info.get("page", RELEASES_PAGE)}
+    threading.Timer(1.0, QUIT.set).start()  # closes the wallet and the node; the setup starts after that
+    return {"ok": True, "version": info["latest"]}
+
+
 def mining_active():
+    if xmrig_running():
+        return True
     try:  # short timeout: the desktop app asks this while its window is closing
         return bool(_post(CFG.daemon + "/mining_status", {}, timeout=3).get("active"))
     except Exception:
@@ -632,6 +911,7 @@ def mining_active():
 
 def shutdown():
     """Close the wallet (it is saved) and, if this app started groxd, stop the node too."""
+    stop_xmrig()
     stop_wallet_rpc()
     p = STATE["node_proc"]
     if p is None or p.poll() is not None:
@@ -654,16 +934,21 @@ def shutdown():
 ROUTES = {
     ("GET", "/api/wallets"): api_wallets,
     ("GET", "/api/state"): api_state,
+    ("GET", "/api/update"): api_update,
     ("POST", "/api/open"): api_open,
     ("POST", "/api/create"): api_create,
     ("POST", "/api/restore"): api_restore,
     ("POST", "/api/lock"): api_lock,
     ("POST", "/api/viewkey"): api_viewkey,
     ("POST", "/api/mining"): api_mining,
+    ("POST", "/api/miningproof"): api_miningproof,
+    ("POST", "/api/checkproof"): api_checkproof,
     ("POST", "/api/send"): api_send,
     ("POST", "/api/node/start"): api_node_start,
     ("POST", "/api/node/stop"): api_node_stop,
     ("POST", "/api/quit"): api_quit,
+    ("POST", "/api/update"): api_update,
+    ("POST", "/api/update/install"): api_update_install,
 }
 
 
@@ -689,6 +974,9 @@ EN_ERRORS = {
     "كلمة السر لازم 6 حروف على الأقل": "Password must be at least 6 characters",
     "لازم 25 كلمة بالظبط": "Exactly 25 words are needed",
     "الكلمات غير صحيحة، راجعها تاني": "Those words are not valid, check them again",
+    "التعدين في الـ Pool محتاج XMRig بتاع Grox. نزّله من هنا وفكّه جوه فولدر المحافظ: ": "Pool mining needs the Grox XMRig. Download it here and unzip it inside your wallet folder: ",
+    "XMRig مشتغلش. التفاصيل في: ": "XMRig did not start. Details in: ",
+    DEFENDER_MSG: "Windows Defender blocked a Grox program. Add the app folder and the blockchain folder to the exclusions, steps here: ",
 }
 
 
@@ -761,6 +1049,7 @@ def build_parser():
     ap.add_argument("--log-dir", default=None, help="folder for the wallet service log (default: wallet folder)")
     ap.add_argument("--node-args", default="",
                     help='extra groxd args for the "Start node" button, e.g. "--add-priority-node=1.2.3.4:19880"')
+    ap.add_argument("--xmrig", default=None, help="path to Grox XMRig (xmrig.exe) for pool mining")
     ap.add_argument("--testnet", action="store_true")
     ap.add_argument("--regtest", action="store_true", help=argparse.SUPPRESS)
     return ap

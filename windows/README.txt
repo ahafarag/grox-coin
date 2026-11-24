@@ -19,8 +19,11 @@ First start
     and not code-signed: press "More info" -> "Run anyway".
   - Windows Firewall may ask about groxd.exe: "Allow" lets other Grox nodes connect
     to you (helps the network). "Cancel" is fine too, mining still works.
-  - Some antivirus programs flag every crypto miner. Grox only mines when you press Start.
-    If groxd.exe was quarantined, restore it and allow it in your antivirus.
+  - Windows Defender may block groxd.exe or grox-wallet-rpc.exe ("WinError 225") because it
+    flags many RandomX programs. Grox only mines when you press Start. Fix: Windows Security ->
+    Virus & threat protection -> Manage settings -> Exclusions -> Add an exclusion -> Folder,
+    add  %LOCALAPPDATA%\Programs\Grox Wallet  and  C:\ProgramData\grox , then restore the
+    files in Protection history (or reinstall). Full steps: docs/WINDOWS.md on GitHub.
 
 Command line (optional)
   bin\groxd.exe              the node

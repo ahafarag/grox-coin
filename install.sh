@@ -87,6 +87,7 @@ cat <<EOF
 
   Stop it:    $DEST/stop.sh
   Explorer:   $DEST/explorer.sh   ->  http://localhost:8792
+  Update:     $DEST/update.sh     (checks GitHub for a newer version)
 
   Your wallets are saved in your home folder (*.keys files).
   Write your 25 words on paper. Never share them with anyone.
